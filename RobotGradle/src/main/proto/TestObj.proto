@@ -1,0 +1,11 @@
+syntax = "proto3";
+package tutorial;
+
+option java_package = "com.team195.lib.util.protogen";
+option java_outer_classname = "TestObjProtos";
+
+message SearchRequest {
+  string query = 1;
+  int32 page_number = 2;
+  int32 result_per_page = 3;
+}
