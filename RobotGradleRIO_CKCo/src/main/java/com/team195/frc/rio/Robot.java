@@ -62,7 +62,7 @@ public class Robot extends TimedRobot {
 		try {
 			oscPortOut = new OSCPortOut(InetAddress.getByName(kCoprocessorIP));
 		} catch (Exception e) {
-//			System.out.println(e.toString());
+			System.out.println(e.toString());
 		}
 		eTimer.start();
 		mNotifier.startPeriodic(kDataReporterPeriod);
