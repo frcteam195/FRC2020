@@ -84,4 +84,43 @@ protobuf {
 jar {
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest(ROBOT_MAIN_CLASS)
+    
+    doLast {
+        def folder = new File( "${rootDir}/build/classes/java/main/edu/wpi" )
+		if (folder.exists()) {
+			project.logger.lifecycle("Overriding WPILibJ Classes")
+			
+			if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
+				def tmpFolder = new File ( "${rootDir}/build/libs/tmpDir" )
+				if (tmpFolder.exists()) {
+					exec {
+						executable "rm"
+						args "-Rf","${tmpFolder.getAbsolutePath()}"
+					}
+				}
+			
+				tmpFolder.mkdirs()
+			
+				exec {
+					executable "sh"
+					args "-c","cd ${tmpFolder.getAbsolutePath()}; jar -xvf ${jar.archivePath}"
+				}
+			
+				exec {
+					executable "sh"
+					args "-c","cp -fr ${rootDir}/build/classes/java/main/edu/wpi/* ${tmpFolder.getAbsolutePath()}/edu/wpi/"
+				}
+				
+				exec {
+					executable "rm"
+					args "-Rf"," ${jar.archivePath}"
+				}
+				
+				exec {
+					executable "sh"
+					args "-c","jar -cmvf ${tmpFolder.getAbsolutePath()}/META-INF/MANIFEST.MF ${jar.archivePath} -C ${tmpFolder.getAbsolutePath()} ."
+				}
+			}
+		}
+    }
 }

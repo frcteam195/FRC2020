@@ -13,6 +13,7 @@ message CKRIOData {
         TELEOP = 1;
         TEST = 2;
         E_STOPPED = 3;
+        NOMODE = 4;
     }
 
     RobotMode robot_mode = 2;
@@ -38,10 +39,10 @@ message CKRIOData {
     AlliancePosition alliance_position = 9;
 
     enum MatchType {
-        PRACTICE = 0;
-        QUALIFICATION = 1;
-        ELIMINATION = 2;
-        NONE = 3;
+        NOMATCH = 0;
+        PRACTICE = 1;
+        QUALIFICATION = 2;
+        ELIMINATION = 3;
     }
 
     MatchType match_type = 10;
@@ -58,8 +59,10 @@ message CKRIOData {
     GyroData gyro_data = 11;
 
     message JoystickData {
-        repeated double axis = 1;
-        repeated bool buttons = 2;
+        repeated double axes = 1;
+        repeated int32 povs = 2;
+        int32 buttons = 3;
+        int32 buttons_count = 4;
     }
 
     repeated JoystickData joystick_data = 12;
