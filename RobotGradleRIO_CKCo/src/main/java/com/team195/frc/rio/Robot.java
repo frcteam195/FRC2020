@@ -5,10 +5,9 @@ import com.illposed.osc.OSCBoundListMessage;
 import com.illposed.osc.OSCPortOut;
 import com.team195.ckcoprocessor.RIOToCoprocessorData;
 import edu.wpi.first.hal.HAL;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Notifier;
-import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.*;
+import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -54,6 +53,9 @@ public class Robot extends TimedRobot {
 
 	@Override
 	public void robotInit() {
+		LiveWindow.disableAllTelemetry();
+		Shuffleboard.disableActuatorWidgets();
+
 		mPhoenixInitializer = new TalonSRX(0);
 		mNavX = new NavXNetworkLite();
 

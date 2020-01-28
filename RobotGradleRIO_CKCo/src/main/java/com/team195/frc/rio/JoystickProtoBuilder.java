@@ -1,7 +1,9 @@
 package com.team195.frc.rio;
 
 import com.team195.ckcoprocessor.RIOToCoprocessorData;
+import edu.wpi.first.hal.HAL;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,32 +11,23 @@ import java.util.List;
 public class JoystickProtoBuilder {
 	private ArrayList<RIOToCoprocessorData.CKRIOData.JoystickData.Builder> mJoystickDataArr = new ArrayList<>();
 
-	private DriverStation.HALJoystickAxes[] mReportingAxesArr = new DriverStation.HALJoystickAxes[DriverStation.kJoystickPorts];
-	private DriverStation.HALJoystickPOVs[] mReportingPOVsArr = new DriverStation.HALJoystickPOVs[DriverStation.kJoystickPorts];
-	private DriverStation.HALJoystickButtons[] mReportingButtonsArr = new DriverStation.HALJoystickButtons[DriverStation.kJoystickPorts];
-
-	private DriverStation.HALJoystickAxes[] mTmpReportingAxesArr;
-	private DriverStation.HALJoystickPOVs[] mTmpReportingPOVsArr;
-	private DriverStation.HALJoystickButtons[] mTmpReportingButtonsArr;
+	private HALJoystickAxes[] mReportingAxesArr = new HALJoystickAxes[DriverStation.kJoystickPorts];
+	private HALJoystickPOVs[] mReportingPOVsArr = new HALJoystickPOVs[DriverStation.kJoystickPorts];
+	private HALJoystickButtons[] mReportingButtonsArr = new HALJoystickButtons[DriverStation.kJoystickPorts];
 
 	public JoystickProtoBuilder() {
 		for (int i = 0; i < DriverStation.kJoystickPorts; i++) {
+			mReportingAxesArr[i] = new HALJoystickAxes(HAL.kMaxJoystickAxes);
+			mReportingPOVsArr[i] = new HALJoystickPOVs(HAL.kMaxJoystickPOVs);
+			mReportingButtonsArr[i] = new HALJoystickButtons();
 			mJoystickDataArr.add(RIOToCoprocessorData.CKRIOData.JoystickData.newBuilder());
 		}
 	}
 
 	public List<RIOToCoprocessorData.CKRIOData.JoystickData.Builder> getJoystickData() {
-		mJoystickDataArr.clear();
-
-		mTmpReportingAxesArr = DriverStation.getInstance().getAllJoystickAxes();
-		mTmpReportingPOVsArr = DriverStation.getInstance().getAllJoystickPOVs();
-		mTmpReportingButtonsArr = DriverStation.getInstance().getAllJoystickButtons();
+		DriverStation.getInstance().getAllJoysticks(mReportingAxesArr, mReportingPOVsArr, mReportingButtonsArr);
 
 		for (int i = 0; i < DriverStation.kJoystickPorts; i++) {
-			mReportingAxesArr[i].fromObj(mTmpReportingAxesArr[i]);
-			mReportingPOVsArr[i].fromObj(mTmpReportingPOVsArr[i]);
-			mReportingButtonsArr[i].fromObj(mTmpReportingButtonsArr[i]);
-
 			mJoystickDataArr.get(i).clear();
 			for (int j = 0; j < mReportingAxesArr[i].m_count; j++) {
 				mJoystickDataArr.get(i).addAxes(mReportingAxesArr[i].m_axes[j]);

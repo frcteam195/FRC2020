@@ -37,7 +37,7 @@ public class DriverStation {
 		public int m_buttons;
 		public byte m_count;
 
-		HALJoystickButtons() {}
+		public HALJoystickButtons() {}
 
 		public void fromObj(HALJoystickButtons buttons) {
 			m_buttons = buttons.m_buttons;
@@ -49,7 +49,7 @@ public class DriverStation {
 		public float[] m_axes;
 		public short m_count;
 
-		HALJoystickAxes(int count) {
+		public HALJoystickAxes(int count) {
 			m_axes = new float[count];
 		}
 
@@ -68,7 +68,7 @@ public class DriverStation {
 		public short[] m_povs;
 		public short m_count;
 
-		HALJoystickPOVs(int count) {
+		public HALJoystickPOVs(int count) {
 			m_povs = new short[count];
 			for (int i = 0; i < count; i++) {
 				m_povs[i] = -1;
@@ -161,11 +161,6 @@ public class DriverStation {
 	private static DriverStation instance = new DriverStation();
 
 
-	// Joystick Reporting Data
-	private HALJoystickAxes[] mReportingAxesArr = new HALJoystickAxes[kJoystickPorts];
-	private HALJoystickPOVs[] mReportingPOVsArr = new HALJoystickPOVs[kJoystickPorts];
-	private HALJoystickButtons[] mReportingButtonsArr = new HALJoystickButtons[kJoystickPorts];
-
 
 	// Joystick User Data
 	private HALJoystickAxes[] m_joystickAxes = new HALJoystickAxes[kJoystickPorts];
@@ -240,10 +235,6 @@ public class DriverStation {
 			m_joystickButtonsCache[i] = new HALJoystickButtons();
 			m_joystickAxesCache[i] = new HALJoystickAxes(HAL.kMaxJoystickAxes);
 			m_joystickPOVsCache[i] = new HALJoystickPOVs(HAL.kMaxJoystickPOVs);
-
-			mReportingButtonsArr[i] = new HALJoystickButtons();
-			mReportingAxesArr[i] = new HALJoystickAxes(HAL.kMaxJoystickAxes);
-			mReportingPOVsArr[i] = new HALJoystickPOVs(HAL.kMaxJoystickPOVs);
 		}
 
 		m_controlWordMutex = new Object();
@@ -1170,46 +1161,20 @@ public class DriverStation {
 		}
 	}
 
-	public HALJoystickAxes[] getAllJoystickAxes() {
+	//Deep copy joystick objects into the provided arrays
+	public void getAllJoysticks(HALJoystickAxes[] axesArr, HALJoystickPOVs[] povsArr, HALJoystickButtons[] buttonsArr) {
 		m_cacheDataMutex.lock();
 		try {
 			for (int i = 0; i < kJoystickPorts; i++) {
-				mReportingAxesArr[i].fromObj(m_joystickAxes[i]);
+				axesArr[i].fromObj(m_joystickAxes[i]);
+				povsArr[i].fromObj(m_joystickPOVs[i]);
+				buttonsArr[i].fromObj(m_joystickButtons[i]);
 			}
 		}
 		finally {
 			m_cacheDataMutex.unlock();
 		}
-		return mReportingAxesArr;
 	}
-
-	public HALJoystickPOVs[] getAllJoystickPOVs() {
-		m_cacheDataMutex.lock();
-		try {
-			for (int i = 0; i < kJoystickPorts; i++) {
-				mReportingPOVsArr[i].fromObj(m_joystickPOVs[i]);
-			}
-		}
-		finally {
-			m_cacheDataMutex.unlock();
-		}
-		return mReportingPOVsArr;
-	}
-
-	public HALJoystickButtons[] getAllJoystickButtons() {
-		m_cacheDataMutex.lock();
-		try {
-			for (int i = 0; i < kJoystickPorts; i++) {
-				mReportingButtonsArr[i].fromObj(m_joystickButtons[i]);
-			}
-		}
-		finally {
-			m_cacheDataMutex.unlock();
-		}
-		return mReportingButtonsArr;
-	}
-
-	
 
 
 
