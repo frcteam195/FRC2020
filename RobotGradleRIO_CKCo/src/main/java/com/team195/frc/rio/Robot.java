@@ -56,6 +56,7 @@ public class Robot extends TimedRobot {
 		LiveWindow.disableAllTelemetry();
 		Shuffleboard.disableActuatorWidgets();
 
+		//Start the Phoenix server for enable signal to motors (use an unused ID)
 		mPhoenixInitializer = new TalonSRX(0);
 		mNavX = new NavXNetworkLite();
 
