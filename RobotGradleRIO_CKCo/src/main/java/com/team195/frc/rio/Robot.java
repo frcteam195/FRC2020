@@ -8,6 +8,10 @@ import edu.wpi.first.hal.HAL;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import org.zeromq.ZMQ;
+import org.zeromq.ZMQ.Context;
+import org.zeromq.ZMQ.Socket;
+
 
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -53,25 +57,47 @@ public class Robot extends TimedRobot {
 
 	@Override
 	public void robotInit() {
-		LiveWindow.disableAllTelemetry();
-		Shuffleboard.disableActuatorWidgets();
+//		LiveWindow.disableAllTelemetry();
+//		Shuffleboard.disableActuatorWidgets();
+//
+//		//Start the Phoenix server for enable signal to motors (use an unused ID)
+//		mPhoenixInitializer = new TalonSRX(0);
+//		mNavX = new NavXNetworkLite();
+//
+//		try {
+//			oscPortOut = new OSCPortOut(InetAddress.getByName(kCoprocessorIP));
+//		} catch (Exception e) {
+//			System.out.println(e.toString());
+//		}
+//		eTimer.start();
+//		mNotifier.startPeriodic(kDataReporterPeriod);
 
-		//Start the Phoenix server for enable signal to motors (use an unused ID)
-		mPhoenixInitializer = new TalonSRX(0);
-		mNavX = new NavXNetworkLite();
+		ctx = ZMQ.context(1);
+		publisher = ctx.socket(ZMQ.PUB);
+		publisher.bind("inproc://publisher");
 
-		try {
-			oscPortOut = new OSCPortOut(InetAddress.getByName(kCoprocessorIP));
-		} catch (Exception e) {
-			System.out.println(e.toString());
-		}
-		eTimer.start();
-		mNotifier.startPeriodic(kDataReporterPeriod);
+		subscriber = ctx.socket(ZMQ.SUB);
+		subscriber.subscribe("H".getBytes());
+		subscriber.connect("inproc://publisher");
+
+
+
+//		ctx.close();
 	}
+
+	private Context ctx;
+	private Socket publisher;
+	private Socket subscriber;
+
+	private int counter = 0;
 
 	@Override
 	public void robotPeriodic() {
-
+		if (counter++ % 50 == 0) {
+			publisher.send("Hello".getBytes(), 0);
+			byte[] test = subscriber.recv(0);
+			System.out.println("Received " + new String(test));
+		}
 	}
 
 	private void buildRIOtoCoData() {
