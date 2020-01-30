@@ -102,7 +102,7 @@ dependencies {
 	compile 'com.google.protobuf:protobuf-java:3.11.1'
 	compile 'com.team195:CKIllposedOSCLib:0.0.1'
 	compile 'org.zeromq:jzmq:3.1.0'
-	//compile 'org.zeromq:jzmq-api:0.2.0'
+	//Good jzmq example: https://dzone.com/articles/working-zeromq-java-and-jzmq
 
     implementation wpi.deps.vendor.java()
     nativeZip wpi.deps.vendor.jni(wpi.platforms.roborio)
