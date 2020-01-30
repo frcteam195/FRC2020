@@ -46,10 +46,10 @@ task deployRIOIPKs {
 			session(remotes.rio) {
 				execute 'sudo mkdir -p /tmp/ipks'
 				put from: fileTree(dir: 'ipks/'), into: '/tmp/ipks'
-// 				execute 'sudo chmod -R 777 /tmp/ipks'
-// 				execute 'for f in /tmp/*.ipk do sudo opkg install "$f"; done' //*/
-// 				execute 'sudo rm -Rf /tmp/ipks'
-// 				execute 'sudo sync'
+ 				execute 'sudo chmod -R 777 /tmp/ipks'
+ 				execute 'cd /tmp/ipks && for f in *.ipk; do sudo opkg install "$f"; done'
+ 				execute 'sudo rm -Rf /tmp/ipks'
+ 				execute 'sudo sync'
 			}
 		}
 	}
