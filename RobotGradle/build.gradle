@@ -58,7 +58,7 @@ ssh.settings {
 def TEAM = 195
 def TEAMIP = "10.1.95.2"
 def RIO_ROBOT_MAIN_CLASS = "com.team195.frc.Main"
-def CKCO_ROBOT_MAIN_CLASS = "com.team195.frc.coprocessor.CoProcessorMain"
+def CKCO_ROBOT_MAIN_CLASS = "com.team195.frc.ckcoprocessor.CoProcessorMain"
 
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project EmbeddedTools.

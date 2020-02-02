@@ -39,7 +39,7 @@ public class Drive extends Subsystem {
 
 	private static final int kLowGearVelocityControlSlot = 0;
 	private static Drive mInstance = new Drive();
-	private final CKSparkMax mLeftMaster, mRightMaster, mLeftSlaveA, mRightSlaveA, mLeftSlaveB, mRightSlaveB;
+	private final CKTalonSRX mLeftMaster, mRightMaster, mLeftSlaveA, mRightSlaveA, mLeftSlaveB, mRightSlaveB;
 	private final CKDoubleSolenoid mPTOShifter;
 	private DriveControlState mDriveControlState;
 	private CKIMU mGyro;
@@ -57,8 +57,6 @@ public class Drive extends Subsystem {
 	private final CachedValue<Boolean> mLeftDriveEncoderPresent;
 	private final CachedValue<Boolean> mRightDriveEncoderPresent;
 	private final CachedValue<Boolean> mGyroPresent;
-
-	private static final Elevator mElevator = Elevator.getInstance();
 
 	private final ElapsedTimer loopTimer = new ElapsedTimer();
 

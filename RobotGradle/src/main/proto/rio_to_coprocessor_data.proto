@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package ckcoprocessor;
 
-option java_package = "com.team195.ckcoprocessor";
+option java_package = "com.team195.frc.ckcoprocessor";
 option java_outer_classname = "RIOToCoprocessorData";
 
 message CKRIOData {

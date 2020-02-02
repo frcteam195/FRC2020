@@ -12,8 +12,6 @@ import com.team195.frc.reporters.ConsoleReporter;
 import com.team195.frc.reporters.DiagnosticMessage;
 import com.team195.frc.reporters.MessageLevel;
 import com.team195.frc.reporters.ReflectingLogDataGenerator;
-import com.team195.frc.subsystems.positions.BallIntakeArmPositions;
-import com.team195.frc.subsystems.positions.ElevatorPositions;
 import com.team195.frc.subsystems.positions.TurretPositions;
 import com.team195.lib.drivers.CKSolenoid;
 import com.team195.lib.drivers.motorcontrol.CKTalonSRX;

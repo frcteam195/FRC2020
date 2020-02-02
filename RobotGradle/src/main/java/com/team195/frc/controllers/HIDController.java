@@ -8,8 +8,6 @@ import com.team195.frc.auto.autonomy.AutomatedAction;
 import com.team195.frc.auto.autonomy.AutomatedActions;
 import com.team195.frc.reporters.ConsoleReporter;
 import com.team195.frc.subsystems.*;
-import com.team195.frc.subsystems.positions.BallIntakeArmPositions;
-import com.team195.frc.subsystems.positions.ElevatorPositions;
 import com.team195.frc.subsystems.positions.TurretPositions;
 import com.team195.lib.drivers.dashjoy.CKDashJoystick;
 import com.team195.lib.util.ElapsedTimer;
