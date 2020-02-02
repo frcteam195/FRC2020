@@ -1,6 +1,6 @@
 package com.team254.lib.physics;
 
-import com.team195.frc2019.reporters.ConsoleReporter;
+import com.team195.frc.reporters.ConsoleReporter;
 import com.team254.lib.util.PolynomialRegression;
 import com.team254.lib.util.Util;
 

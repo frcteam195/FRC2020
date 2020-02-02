@@ -1,7 +1,7 @@
 package com.team195.lib.drivers.motorcontrol;
 
-import com.team195.frc2019.constants.CalConstants;
-import com.team195.frc2019.reporters.DiagnosticMessage;
+import com.team195.frc.constants.CalConstants;
+import com.team195.frc.reporters.DiagnosticMessage;
 
 /**
  * Interface for all motor control to abstract controllers from different vendors

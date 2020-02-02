@@ -2,8 +2,8 @@ package com.team254.lib.drivers;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.team195.frc2019.reporters.ConsoleReporter;
-import com.team195.frc2019.subsystems.Subsystem;
+import com.team195.frc.reporters.ConsoleReporter;
+import com.team195.frc.subsystems.Subsystem;
 import com.team254.lib.util.Util;
 import edu.wpi.first.wpilibj.Timer;
 

@@ -1,7 +1,7 @@
 package com.team195.lib.util;
 
-import com.team195.frc2019.reporters.ConsoleReporter;
-import com.team195.frc2019.reporters.MessageLevel;
+import com.team195.frc.reporters.ConsoleReporter;
+import com.team195.frc.reporters.MessageLevel;
 
 import java.util.Base64;
 import java.util.HashMap;

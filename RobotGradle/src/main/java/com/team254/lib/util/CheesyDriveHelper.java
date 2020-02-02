@@ -1,6 +1,6 @@
 package com.team254.lib.util;
 
-import com.team195.frc2019.constants.Constants;
+import com.team195.frc.constants.Constants;
 
 /**
  * Helper class to implement "Cheesy Drive". "Cheesy Drive" simply means that the "turning" stick controls the curvature

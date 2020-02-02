@@ -1,7 +1,7 @@
 package com.team195.lib.util;
 
-import com.team195.frc2019.reporters.ConsoleReporter;
-import com.team195.frc2019.reporters.MessageLevel;
+import com.team195.frc.reporters.ConsoleReporter;
+import com.team195.frc.reporters.MessageLevel;
 import com.team195.lib.drivers.motorcontrol.MCControlMode;
 import com.team195.lib.drivers.motorcontrol.TuneableMotorController;
 import edu.wpi.first.wpilibj.Timer;

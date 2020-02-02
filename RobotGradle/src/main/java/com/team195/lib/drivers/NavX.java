@@ -3,7 +3,7 @@ package com.team195.lib.drivers;
 import com.kauailabs.navx.AHRSProtocol.AHRSUpdateBase;
 import com.kauailabs.navx.frc.AHRS;
 import com.kauailabs.navx.frc.ITimestampedDataSubscriber;
-import com.team195.frc2019.constants.CalConstants;
+import com.team195.frc.constants.CalConstants;
 import com.team254.lib.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Timer;

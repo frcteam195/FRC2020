@@ -1,6 +1,6 @@
 package com.team195.lib.util;
 
-import com.team195.frc2019.reporters.ConsoleReporter;
+import com.team195.frc.reporters.ConsoleReporter;
 
 import java.util.function.Function;
 
