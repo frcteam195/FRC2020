@@ -1,6 +1,5 @@
 package com.team195.frc.auto.actions;
 
-import com.team195.frc.constants.CalConstants;
 import com.team195.frc.subsystems.Drive;
 import com.team254.lib.physics.DriveCharacterization;
 import com.team254.lib.util.DriveSignal;

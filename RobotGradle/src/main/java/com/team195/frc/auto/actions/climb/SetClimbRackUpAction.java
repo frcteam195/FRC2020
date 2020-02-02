@@ -1,7 +1,6 @@
 package com.team195.frc.auto.actions.climb;
 
 import com.team195.frc.auto.actions.Action;
-import com.team195.frc.reporters.ConsoleReporter;
 import com.team195.frc.subsystems.Drive;
 import com.team195.lib.util.TimeoutTimer;
 

@@ -1,15 +1,12 @@
 package com.team195.frc.reporters;
 
 import com.team195.frc.constants.Constants;
-import com.team195.lib.util.ThreadRateControl;
 import com.team254.lib.util.CrashTrackingRunnable;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Notifier;
 
-import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.concurrent.TimeUnit;

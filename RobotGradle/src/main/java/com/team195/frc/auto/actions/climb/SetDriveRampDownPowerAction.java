@@ -4,8 +4,6 @@ import com.team195.frc.auto.actions.Action;
 import com.team195.frc.subsystems.Drive;
 import com.team254.lib.util.DriveSignal;
 
-import java.util.function.Function;
-
 public class SetDriveRampDownPowerAction implements Action {
 	private static final Drive mDrive = Drive.getInstance();
 

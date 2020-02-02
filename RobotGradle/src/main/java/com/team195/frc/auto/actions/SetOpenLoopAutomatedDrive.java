@@ -1,6 +1,5 @@
 package com.team195.frc.auto.actions;
 
-import com.team195.frc.reporters.ConsoleReporter;
 import com.team195.frc.subsystems.Drive;
 import com.team254.lib.util.DriveSignal;
 import edu.wpi.first.wpilibj.Timer;

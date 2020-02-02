@@ -1,12 +1,6 @@
 package com.team195.frc.constants;
 
-import com.team195.frc.reporters.ConsoleReporter;
-import com.team195.frc.subsystems.Turret;
 import com.team195.lib.util.RGBColor;
-
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.util.Enumeration;
 
 /**
  * A list of constants used by the rest of the robot code. This include physics constants as well as constants

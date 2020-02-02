@@ -5,9 +5,6 @@ import com.team195.frc.reporters.ConsoleReporter;
 import com.team195.frc.subsystems.BallIntakeArm;
 import com.team195.frc.subsystems.Drive;
 import com.team195.lib.util.TimeoutTimer;
-import com.team254.lib.util.DriveSignal;
-
-import java.util.function.Function;
 
 public class SetIntakeBarForwardClimbAction implements Action {
 	private static final Drive mDrive = Drive.getInstance();

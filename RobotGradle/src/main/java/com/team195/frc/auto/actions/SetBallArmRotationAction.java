@@ -1,12 +1,8 @@
 package com.team195.frc.auto.actions;
 
-import com.team195.frc.reporters.ConsoleReporter;
 import com.team195.frc.subsystems.BallIntakeArm;
 import com.team195.frc.subsystems.positions.BallIntakeArmPositions;
-import com.team195.lib.util.ThreadRateControl;
 import com.team195.lib.util.TimeoutTimer;
-
-import java.sql.Time;
 
 public class SetBallArmRotationAction implements Action {
 	private static final BallIntakeArm mBallArm = BallIntakeArm.getInstance();

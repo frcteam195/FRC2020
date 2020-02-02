@@ -4,7 +4,6 @@ import com.team195.frc.constants.AutoConstants;
 import com.team195.lib.util.TimeoutTimer;
 
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class WaitForFallingEdgeButtonAction implements Action {

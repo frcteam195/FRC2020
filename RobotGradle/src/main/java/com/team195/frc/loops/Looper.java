@@ -2,9 +2,7 @@ package com.team195.frc.loops;
 
 import com.team195.frc.constants.Constants;
 import com.team195.frc.reporters.ConsoleReporter;
-import com.team195.frc.reporters.MessageLevel;
 import com.team195.lib.util.Reportable;
-import com.team195.lib.util.TimeoutTimer;
 import com.team254.lib.util.CrashTrackingRunnable;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.Timer;

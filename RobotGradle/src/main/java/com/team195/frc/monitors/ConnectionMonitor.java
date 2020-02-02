@@ -1,10 +1,7 @@
 package com.team195.frc.monitors;
 
 import com.team195.frc.constants.Constants;
-import com.team195.frc.reporters.ConsoleReporter;
-import com.team195.frc.reporters.MessageLevel;
 import com.team195.frc.controllers.LEDController;
-import com.team195.lib.util.ThreadRateControl;
 import com.team254.lib.util.CrashTrackingRunnable;
 import com.team254.lib.util.LatchedBoolean;
 import edu.wpi.first.wpilibj.DriverStation;

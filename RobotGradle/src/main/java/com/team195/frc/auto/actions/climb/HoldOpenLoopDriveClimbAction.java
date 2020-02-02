@@ -6,7 +6,6 @@ import com.team195.lib.util.TimeoutTimer;
 import com.team254.lib.util.DriveSignal;
 
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class HoldOpenLoopDriveClimbAction implements Action {

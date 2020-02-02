@@ -2,7 +2,6 @@ package com.team195.frc.auto.actions;
 
 import com.team195.frc.constants.AutoConstants;
 import com.team195.frc.subsystems.Turret;
-import com.team195.lib.util.ThreadRateControl;
 import com.team195.lib.util.TimeoutTimer;
 
 public class SetBeakAction implements Action {
