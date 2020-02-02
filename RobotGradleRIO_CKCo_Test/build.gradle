@@ -39,7 +39,6 @@ ssh.settings {
 }
 
 task deployRIOIPKs {
-
 	doLast {
 		project.logger.lifecycle("Deploying RIO IPKs")
 		ssh.run {

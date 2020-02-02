@@ -6,7 +6,7 @@ buildscript {
     dependencies {
         classpath 'gov.nist.math:jama:1.0.3'
         classpath 'com.bmuschko:gradle-tomcat-plugin:2.5'
-		classpath 'org.apache.commons:commons-math3:3.6.1'
+ 		classpath 'org.apache.commons:commons-math3:3.6.1'
         classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.11'
     }
 }
@@ -16,16 +16,46 @@ plugins {
     id "edu.wpi.first.GradleRIO" version "2020.2.2"
     id "idea"
     id "war"
-    id "org.hidetake.ssh" version '2.10.1'
+    id "org.hidetake.ssh" version "2.10.1"
+    id "com.google.protobuf" version "0.8.11"
 }
 
 apply plugin: 'com.bmuschko.tomcat'
-apply plugin: 'java'
-apply plugin: 'com.google.protobuf'
+
+repositories {
+	maven {
+		url "https://raw.githubusercontent.com/frcteam195/CKMavenRepo/master"
+		content {
+			includeGroup 'com.team195'
+		}
+	}
+	
+	mavenCentral()
+	jcenter()
+}
+
+remotes {
+	ckCo{
+		host = '10.1.95.19'
+		user = 'root'
+		password = '195'
+	}
+	rio{
+		host = '10.1.95.2'
+		user = 'admin'
+		password = ''
+	}
+}
+
+ssh.settings {
+	knownHosts = allowAnyHosts
+}
+
 
 def TEAM = 195
 def TEAMIP = "10.1.95.2"
-def ROBOT_MAIN_CLASS = "com.team195.frc2019.Main"
+def RIO_ROBOT_MAIN_CLASS = "com.team195.frc2019.Main"
+def CKCO_ROBOT_MAIN_CLASS = "com.team195.frc2019.coprocessor.CoProcessorMain"
 
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project EmbeddedTools.
@@ -36,7 +66,7 @@ deploy {
             // or from command line. If not found an exception will be thrown.
             // You can use getTeamOrDefault(team) instead of getTeamNumber if you
             // want to store a team number in this file.
-            team = frc.getTeamOrDefault(TEAM)
+            team = TEAM
         }
     }
     artifacts {
@@ -49,7 +79,7 @@ deploy {
 			project.logger.lifecycle('Checking if profile mode...')
 			//Enter profile mode with ./gradlew deploy -PprofileMode
 			if (frc.project.hasProperty("profileMode")) {
-				project.logger.lifecycle('Debug mode enabled!')
+				project.logger.lifecycle('Profile mode enabled!')
 				project.logger.lifecycle("Connect JMX client to ${TEAMIP}:1099 for RoboRIO profiling with visualvm.")
 				jvmArgs = [ "-Dcom.sun.management.jmxremote=true",
 							"-Dcom.sun.management.jmxremote.port=1099",
@@ -61,15 +91,14 @@ deploy {
 							"-XX:MaxGCPauseMillis=10"
 							]
 			} else {
+				project.logger.lifecycle('Profile mode not enabled!')
  				jvmArgs = [ "-XX:+UseG1GC",
  							"-XX:MaxGCPauseMillis=10"
  							]
-				//jvmArgs = [ "-XX:+UseConcMarkSweepGC",
-				//			"-XX:MaxGCPauseMillis=10"
-				//			]
 			}
             
-            
+   			//Specify robot command to remove concurrent mark sweeper GC command
+			robotCommand = "/usr/local/frc/JRE/bin/java -Djava.library.path=/usr/local/frc/third-party/lib -Djava.lang.invoke.stringConcat=BC_SB " + jvmArgs.join(" ") + " " + (debug ? debugFlags : "") + " -jar \"<<BINARY>>\"" + arguments.join(" ")
         }
         // Built in artifact to deploy arbitrary files to the roboRIO.
         fileTreeArtifact('frcStaticFileDeploy') {
@@ -82,6 +111,7 @@ deploy {
     }
 }
 
+
 // Defining my dependencies. In this case, WPILib (+ friends), and vendor libraries.
 // Also defines JUnit 4.
 dependencies {
@@ -89,12 +119,15 @@ dependencies {
     nativeZip wpi.deps.wpilibJni(wpi.platforms.roborio)
     nativeDesktopZip wpi.deps.wpilibJni(wpi.platforms.desktop)
 
+    compile 'gov.nist.math:jama:1.0.3'
 	compile 'com.google.protobuf:protobuf-java:3.11.1'
-    compile("gov.nist.math:jama:1.0.3")
-    def jUnitVersion = '5.6.0-M1'
+	compile 'com.team195:CKIllposedOSCLib:0.0.1'
+	compile 'org.zeromq:jzmq:3.1.0'
+	//Good jzmq example: https://dzone.com/articles/working-zeromq-java-and-jzmq
+	//Better example for zmq protobuf: https://www.dotkam.com/2011/09/09/zeromq-and-google-protocol-buffers/
+	def jUnitVersion = '5.6.0-M1'
     testCompile("org.junit.jupiter:junit-jupiter-api:${jUnitVersion}")
     testRuntime("org.junit.jupiter:junit-jupiter-engine:${jUnitVersion}")
-
 
     implementation wpi.deps.vendor.java()
     nativeZip wpi.deps.vendor.jni(wpi.platforms.roborio)
@@ -102,9 +135,7 @@ dependencies {
 
     // In Java for now, the argument must be false
     simulation wpi.deps.sim.gui(wpi.platforms.desktop, false)
-
     testImplementation 'junit:junit:4.12'
-    
     
 	def tomcatVersion = '9.0.30'
     def tomcatLoggingVersion = '9.0.0.M6'
@@ -118,7 +149,6 @@ dependencies {
 }
 
 protobuf {
-  //generatedFilesBaseDir = "$projectDir/src/main/java/com/team195/lib/util/protogen"
   generatedFilesBaseDir = "$projectDir/src/generated"
   
   protoc {
@@ -145,5 +175,118 @@ war {
 // knows where to look for our Robot Class.
 jar {
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
-    manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest(ROBOT_MAIN_CLASS)
+    manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest(RIO_ROBOT_MAIN_CLASS)
+    
+    doLast {
+        def folder = new File( "${rootDir}/build/classes/java/main/edu/wpi" )
+		if (folder.exists()) {
+			project.logger.lifecycle("Overriding WPILibJ Classes")
+			
+			if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
+				def tmpFolder = new File ( "${rootDir}/build/libs/tmpDir" )
+				if (tmpFolder.exists()) {
+					exec {
+						executable "rm"
+						args "-Rf","${tmpFolder.getAbsolutePath()}"
+					}
+				}
+			
+				tmpFolder.mkdirs()
+			
+				exec {
+					executable "sh"
+					args "-c","cd ${tmpFolder.getAbsolutePath()}; jar -xvf ${jar.archivePath}"
+				}
+			
+				exec {
+					executable "sh"
+					args "-c","cp -fr ${rootDir}/build/classes/java/main/edu/wpi/* ${tmpFolder.getAbsolutePath()}/edu/wpi/"
+				}
+				
+				exec {
+					executable "rm"
+					args "-Rf"," ${jar.archivePath}"
+				}
+				
+				exec {
+					executable "sh"
+					args "-c","jar -cmvf ${tmpFolder.getAbsolutePath()}/META-INF/MANIFEST.MF ${jar.archivePath} -C ${tmpFolder.getAbsolutePath()} ."
+				}
+			}
+		}
+    }
+}
+
+task deployRIOIPKs {
+	group 'embeddedtools'
+	doLast {
+		project.logger.lifecycle("Deploying RIO IPKs")
+		ssh.run {
+			session(remotes.rio) {
+				execute 'sudo mkdir -p /tmp/ipks'
+				put from: fileTree(dir: 'ipks/'), into: '/tmp/ipks'
+ 				execute 'sudo chmod -R 777 /tmp/ipks'
+ 				execute 'cd /tmp/ipks && for f in *.ipk; do sudo opkg install "$f"; done'
+ 				execute 'sudo rm -Rf /tmp/ipks'
+ 				execute 'sudo sync'
+			}
+		}
+	}
+}
+
+task ckCoDeploy {
+	group 'embeddedtools'
+	dependsOn('build')
+	dependsOn('ckCoInternalDeploy')
+}
+
+task ckCoJar(type: Jar) {
+	group 'build'
+	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+	from { sourceSets.main.runtimeClasspath   }
+	manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest(CKCO_ROBOT_MAIN_CLASS)
+	destinationDir = file('build/ckCo')
+	archivesBaseName = 'FRCPIUserProgram'
+	doLast {
+		project.logger.lifecycle("Building CKCo Jar")
+	}
+}
+
+task ckCoInternalDeploy {
+	dependsOn('ckCoJar')
+
+	doLast {
+		project.logger.lifecycle("Deploying CKCo Jar")
+		ssh.run {
+			session(remotes.ckCo) {
+				execute 'sudo mkdir -p /frc/userProg'
+				execute 'sudo mkdir -p /frc/userDeploy'
+				execute 'sudo systemctl stop FRCPIUserProgram'
+				execute 'sudo chmod -R 777 /frc'
+				put from: fileTree(dir: 'build/ckCo/'), into: '/frc/userProg'
+				execute 'sudo chmod -R 777 /frc'
+				execute 'sudo echo "#! /bin/sh" > /frc/commands/robot_command.sh'
+				//Enter profile mode with ./gradlew <command> -PprofileMode
+				if (frc.project.hasProperty("profileMode")) {
+					project.logger.lifecycle('Debug mode enabled!')
+					project.logger.lifecycle("Connect client to ${remotes.ckCo.host} for coprocessor profiling with YourKit Profiler.")
+					execute 'sudo echo "/usr/bin/java -agentpath:/usr/lib/jni/libyjpagent.so=listen=' + remotes.ckCo.host + ' -jar /frc/userProg/FRCPIUserProgram.jar" >> /frc/commands/robot_command.sh'
+				} else {
+					execute 'sudo echo "/usr/bin/java -jar /frc/userProg/FRCPIUserProgram.jar" >> /frc/commands/robot_command.sh'
+				}
+				execute 'sudo chmod -R 777 /frc'
+				execute 'sudo sync'
+				execute 'sudo sync'
+				execute 'sudo sync'
+				execute 'sudo systemctl start FRCPIUserProgram'
+			}
+		}
+	}
+}
+
+task deployAll() {
+	group 'embeddedtools'
+	dependsOn('build')
+	dependsOn('ckCoInternalDeploy')
+	dependsOn('deploy')
 }
