@@ -1,0 +1,218 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+    dependencies {
+        classpath 'gov.nist.math:jama:1.0.3'
+        classpath 'com.bmuschko:gradle-tomcat-plugin:2.5'
+    }
+}
+
+plugins {
+    id "java"
+    id "edu.wpi.first.GradleRIO" version "2020.2.2"
+    id "idea"
+    id "war"
+    id "org.hidetake.ssh" version "2.10.1"
+}
+
+apply plugin: 'com.bmuschko.tomcat'
+
+tasks.withType(JavaCompile) {
+	options.compilerArgs << '-Xlint:unchecked'
+	options.deprecation = true
+}
+
+repositories {
+	maven {
+		url "https://raw.githubusercontent.com/frcteam195/CKMavenRepo/master"
+		content {
+			includeGroup 'com.team195'
+		}
+	}
+	
+	mavenCentral()
+	jcenter()
+}
+
+remotes {
+	rio{
+		host = '10.1.95.2'
+		user = 'admin'
+		password = ''
+	}
+}
+
+ssh.settings {
+	knownHosts = allowAnyHosts
+}
+
+
+def TEAM = 195
+def TEAMIP = "10.1.95.2"
+def RIO_ROBOT_MAIN_CLASS = "com.team195.frc.Main"
+
+// Define my targets (RoboRIO) and artifacts (deployable files)
+// This is added by GradleRIO's backing project EmbeddedTools.
+deploy {
+    targets {
+        roboRIO("roborio") {
+            // Team number is loaded either from the .wpilib/wpilib_preferences.json
+            // or from command line. If not found an exception will be thrown.
+            // You can use getTeamOrDefault(team) instead of getTeamNumber if you
+            // want to store a team number in this file.
+            team = TEAM
+        }
+    }
+    artifacts {
+        frcJavaArtifact('frcJava') {
+            targets << "roborio"
+            // Debug can be overridden by command line, for use with VSCode
+            debug = frc.getDebugOrDefault(false)
+            
+            
+			project.logger.lifecycle('Checking if profile mode...')
+			//Enter profile mode with ./gradlew deploy -PprofileMode
+			if (frc.project.hasProperty("profileMode")) {
+				project.logger.lifecycle('Profile mode enabled!')
+				project.logger.lifecycle("Connect JMX client to ${TEAMIP}:1099 for RoboRIO profiling with visualvm.")
+				jvmArgs = [ "-Dcom.sun.management.jmxremote=true",
+							"-Dcom.sun.management.jmxremote.port=1099",
+							"-Dcom.sun.management.jmxremote.local.only=false",
+							"-Dcom.sun.management.jmxremote.ssl=false",
+							"-Dcom.sun.management.jmxremote.authenticate=false",
+							"-Djava.rmi.server.hostname=${TEAMIP}",
+							"-XX:+UseG1GC",
+							"-XX:MaxGCPauseMillis=10"
+							]
+			} else {
+				project.logger.lifecycle('Profile mode not enabled!')
+ 				jvmArgs = [ "-XX:+UseG1GC",
+ 							"-XX:MaxGCPauseMillis=10"
+ 							]
+			}
+            
+   			//Specify robot command to remove concurrent mark sweeper GC command
+			robotCommand = "/usr/local/frc/JRE/bin/java -Djava.library.path=/usr/local/frc/third-party/lib -Djava.lang.invoke.stringConcat=BC_SB " + jvmArgs.join(" ") + " " + (debug ? debugFlags : "") + " -jar \"<<BINARY>>\"" + arguments.join(" ")
+        }
+        // Built in artifact to deploy arbitrary files to the roboRIO.
+        fileTreeArtifact('frcStaticFileDeploy') {
+            // The directory below is the local directory to deploy
+            files = fileTree(dir: 'src/main/deploy')
+            // Deploy to RoboRIO target, into /home/lvuser/deploy
+            targets << "roborio"
+            directory = '/home/lvuser/deploy'
+        }
+    }
+}
+
+
+// Defining my dependencies. In this case, WPILib (+ friends), and vendor libraries.
+// Also defines JUnit 4.
+dependencies {
+    implementation wpi.deps.wpilib()
+    nativeZip wpi.deps.wpilibJni(wpi.platforms.roborio)
+    nativeDesktopZip wpi.deps.wpilibJni(wpi.platforms.desktop)
+
+    compile 'gov.nist.math:jama:1.0.3'
+	compile 'com.team195:CKIllposedOSCLib:0.0.1'
+	def jUnitVersion = '5.6.0-M1'
+    testCompile("org.junit.jupiter:junit-jupiter-api:${jUnitVersion}")
+    testRuntime("org.junit.jupiter:junit-jupiter-engine:${jUnitVersion}")
+
+    implementation wpi.deps.vendor.java()
+    nativeZip wpi.deps.vendor.jni(wpi.platforms.roborio)
+    nativeDesktopZip wpi.deps.vendor.jni(wpi.platforms.desktop)
+
+    // In Java for now, the argument must be false
+    simulation wpi.deps.sim.gui(wpi.platforms.desktop, false)
+    testImplementation 'junit:junit:4.12'
+    
+	def tomcatVersion = '9.0.30'
+    def tomcatLoggingVersion = '9.0.0.M6'
+    tomcat "org.apache.tomcat.embed:tomcat-embed-core:${tomcatVersion}",
+            "org.apache.tomcat.embed:tomcat-embed-logging-juli:${tomcatLoggingVersion}",
+    		"org.apache.tomcat.embed:tomcat-embed-jasper:${tomcatVersion}"
+
+	compile("org.springframework:spring-webmvc:5.2.3.RELEASE")
+    compile("javax.servlet:javax.servlet-api:4.0.1")
+    compile("javax.servlet:jstl:1.2") 
+}
+
+// context where tomcat is deployed, by default localhost:8080/
+tomcatRun.contextPath = '/'
+tomcatRunWar.contextPath = '/'
+
+tomcat {
+    httpProtocol = 'org.apache.coyote.http11.Http11Nio2Protocol'
+    ajpProtocol  = 'org.apache.coyote.ajp.AjpNio2Protocol'
+}
+
+war {
+	//entryCompression = ZipEntryCompression.STORED
+}
+
+// Setting up my Jar File. In this case, adding all libraries into the main jar ('fat jar')
+// in order to make them all available at runtime. Also adding the manifest so WPILib
+// knows where to look for our Robot Class.
+jar {
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest(RIO_ROBOT_MAIN_CLASS)
+    
+    doLast {
+        def folder = new File( "${rootDir}/build/classes/java/main/edu/wpi" )
+		if (folder.exists()) {
+			project.logger.lifecycle("Overriding WPILibJ Classes")
+			
+			if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
+				def tmpFolder = new File ( "${rootDir}/build/libs/tmpDir" )
+				if (tmpFolder.exists()) {
+					exec {
+						executable "rm"
+						args "-Rf","${tmpFolder.getAbsolutePath()}"
+					}
+				}
+			
+				tmpFolder.mkdirs()
+			
+				exec {
+					executable "sh"
+					args "-c","cd ${tmpFolder.getAbsolutePath()}; jar -xvf ${jar.archivePath}"
+				}
+			
+				exec {
+					executable "sh"
+					args "-c","cp -fr ${rootDir}/build/classes/java/main/edu/wpi/* ${tmpFolder.getAbsolutePath()}/edu/wpi/"
+				}
+				
+				exec {
+					executable "rm"
+					args "-Rf"," ${jar.archivePath}"
+				}
+				
+				exec {
+					executable "sh"
+					args "-c","jar -cmvf ${tmpFolder.getAbsolutePath()}/META-INF/MANIFEST.MF ${jar.archivePath} -C ${tmpFolder.getAbsolutePath()} ."
+				}
+			}
+		}
+    }
+}
+
+task deployRIOIPKs {
+	group 'embeddedtools'
+	doLast {
+		project.logger.lifecycle("Deploying RIO IPKs")
+		ssh.run {
+			session(remotes.rio) {
+				execute 'sudo mkdir -p /tmp/ipks'
+				put from: fileTree(dir: 'ipks/'), into: '/tmp/ipks'
+ 				execute 'sudo chmod -R 777 /tmp/ipks'
+ 				execute 'cd /tmp/ipks && for f in *.ipk; do sudo opkg install "$f"; done'
+ 				execute 'sudo rm -Rf /tmp/ipks'
+ 				execute 'sudo sync'
+			}
+		}
+	}
+}
