@@ -59,6 +59,12 @@ public enum MCControlMode {
 			return ControlMode.MotionProfile;
 		}
 	},
+	MotionProfileSW(8) {
+		@Override
+		public ControlMode CTRE() {
+			return ControlMode.Velocity;
+		}
+	},
 	Disabled(15) {
 		@Override
 		public ControlMode CTRE() {

@@ -404,8 +404,8 @@ public class Drive extends Subsystem {
 		mPeriodicIO.right_velocity_RPM = mRightMaster.getVelocity();
 		mPeriodicIO.gyro_heading = Rotation2d.fromDegrees(mGyro.getFusedHeading()).rotateBy(mGyroOffset);
 		mPeriodicIO.gyro_roll = mGyro.getRoll();
-		mPeriodicIO.left_drive_current = mLeftMaster.getSupplyCurrent();
-		mPeriodicIO.right_drive_current = mRightMaster.getSupplyCurrent();
+		mPeriodicIO.left_drive_current = mLeftMaster.getMCOutputCurrent();
+		mPeriodicIO.right_drive_current = mRightMaster.getMCOutputCurrent();
 		mPeriodicIO.gyro_present = mGyroPresent.getValue();
 		mPeriodicIO.left_bus_voltage = mLeftMaster.getMCInputVoltage();
 		mPeriodicIO.right_bus_voltage = mRightMaster.getMCInputVoltage();

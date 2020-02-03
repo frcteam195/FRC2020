@@ -124,13 +124,15 @@ public class Turret extends Subsystem implements InterferenceSystem {
 			}
 		}
 
+
+
 		@SuppressWarnings("Duplicates")
 		@Override
 		public void onLoop(double timestamp) {
 			synchronized (Turret.this) {
+				Pose2d robotCurrentPos = RobotState.getInstance().getLatestFieldToVehicle().getValue();
 				switch (mTurretControlMode) {
 					case AUTO_TRACK:
-						Pose2d robotCurrentPos = RobotState.getInstance().getLatestFieldToVehicle().getValue();
 						Translation2d currentRocketTarget;
 
 						if (robotCurrentPos.getTranslation().x() > 0)
@@ -157,6 +159,9 @@ public class Turret extends Subsystem implements InterferenceSystem {
 							mTurretRotationMotor.set(MCControlMode.MotionMagic, mPeriodicIO.turret_setpoint, 0, 0);
 //						else if (mPeriodicIO.turret_setpoint != TurretPositions.Back180 && mPeriodicIO.turret_setpoint != TurretPositions.Home)
 //							mTurretRotationMotor.set(MCControlMode.MotionMagic, 0, 0, 0);
+						break;
+					case GIMBAL:
+						
 						break;
 					case OPEN_LOOP:
 						mTurretRotationMotor.set(MCControlMode.PercentOut, Math.min(Math.max(mPeriodicIO.turret_setpoint, -1), 1), 0, 0);
@@ -192,6 +197,14 @@ public class Turret extends Subsystem implements InterferenceSystem {
 		return Math.abs(mPeriodicIO.turret_setpoint - mPeriodicIO.turret_position) < Math.abs(posDelta);
 	}
 
+	public static double convertTurretRotationsToMotorRotations(double rotations) {
+		return rotations * (CalConstants.kTurretLargeGearTeeth / CalConstants.kTurretSmallGearTeeth);
+	}
+
+	public static double convertMotorRotationsToTurretRotations(double rotations) {
+		return rotations / (CalConstants.kTurretLargeGearTeeth / CalConstants.kTurretSmallGearTeeth);
+	}
+
 	public static double convertRotationsToTurretDegrees(double rotations) {
 		return rotations / (CalConstants.kTurretLargeGearTeeth / CalConstants.kTurretSmallGearTeeth / 360.0);
 	}
@@ -215,6 +228,7 @@ public class Turret extends Subsystem implements InterferenceSystem {
 		OPEN_LOOP,
 		AUTO_TRACK,
 		VISION_TRACK,
+		GIMBAL,
 		DISABLED;
 	}
 

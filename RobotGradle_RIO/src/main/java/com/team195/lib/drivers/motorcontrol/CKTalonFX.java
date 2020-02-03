@@ -75,6 +75,10 @@ public class CKTalonFX implements TuneableMotorController {
 		mTalonFX.setInverted(inverted);
 	}
 
+	public void follow(CKTalonFX tfx) {
+		mTalonFX.follow(tfx.mTalonFX);
+	}
+
 	private void initCachedValues() {
 		localQuadPosition = new CachedValue<>(100, (t) -> convertNativeUnitsToRotations(mTalonFX.getSensorCollection().getIntegratedSensorPosition() * (sensorInverted ? -1 : 1)));
 		forwardLimitCachedValue = new CachedValue<>(150, (t) -> mTalonFX.getSensorCollection().isFwdLimitSwitchClosed() == 1);

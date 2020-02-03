@@ -110,25 +110,8 @@ public class CalConstants {
 	//Units in rotations
 	public static final double kTurretForwardSoftLimit = Turret.convertTurretDegreesToRotations(225);
 	public static final double kTurretReverseSoftLimit = -kTurretForwardSoftLimit;
-	public static final double kTurretSmallGearTeeth = 36;
-	public static final double kTurretLargeGearTeeth = 252;
-	///////////////////////////////////////////////////////////////////////////
-
-	///////////////////////////////////////////////////////////////////////////
-	//Ball Intake Arm
-	public static final double kBallIntakeArmUpPositionKp = 3.7;
-	public static final double kBallIntakeArmUpPositionKi = 0.0;
-	public static final double kBallIntakeArmUpPositionKd = 12.0;
-	public static final double kBallIntakeArmUpPositionKf = 0.5600505122;
-	public static final int kBallIntakeArmUpPositionCruiseVel = 220;
-	public static final int kBallIntakeArmUpPositionMMAccel = 420;
-	public static final int kBallArmRotationContinuousCurrentLimit = 10;
-	public static final int kBallArmRotationPeakCurrentThreshold = 12;
-	public static final int kBallArmRotationPeakCurrentThresholdExceedDuration = 200;
-	public static final double kBallArmRollerOpenLoopRamp = 0.2;
-	public static final int kBallArmRollerContinuousCurrentLimit = 30;
-	public static final int kBallArmRollerPeakCurrentThreshold = 31;
-	public static final int kBallArmRollerPeakCurrentThresholdExceedDuration = 100;
+	public static final double kTurretSmallGearTeeth = 18;
+	public static final double kTurretLargeGearTeeth = 124;
 	///////////////////////////////////////////////////////////////////////////
 
 	//Breaker model for trip time output in seconds y = a*(current_percent_over_rating)^b + c
