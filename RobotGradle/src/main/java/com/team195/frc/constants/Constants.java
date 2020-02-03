@@ -38,6 +38,9 @@ public class Constants {
     public static final int LOG_OSC_REPORTER_PORT = 5805;
     public static final int AUTO_SELECTOR_PORT = 5806;
     public static final int DASHJOY_RECEIVER_PORT = 5809;
+    public static final int CKCO_TRANSPORT_PORT = 5808;
+    public static final String COPROCESSOR_IP = "10.1.95.19";
+    public static final String RIO_IP = "10.1.95.2";
 
 
     public static final boolean TUNING_PIDS = false;

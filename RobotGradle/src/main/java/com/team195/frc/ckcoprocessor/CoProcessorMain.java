@@ -5,6 +5,6 @@ public final class CoProcessorMain {
 	}
 
 	public static void main(String... args) {
-		// RobotBase.startRobot(Robot::new);
+		CKCoprocessorTimedRobot.startRobot(CKCoprocessorRobot::new);
 	}
 }

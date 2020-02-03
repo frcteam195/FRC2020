@@ -125,6 +125,7 @@ dependencies {
     compile 'gov.nist.math:jama:1.0.3'
 	compile 'com.google.protobuf:protobuf-java:3.11.1'
 	compile 'com.team195:CKIllposedOSCLib:0.0.1'
+	compile 'com.team195:CKARMNotifierJNI:0.0.1'
 	compile 'org.zeromq:jzmq:3.1.0'
 	//Good jzmq example: https://dzone.com/articles/working-zeromq-java-and-jzmq
 	//Better example for zmq protobuf: https://www.dotkam.com/2011/09/09/zeromq-and-google-protocol-buffers/

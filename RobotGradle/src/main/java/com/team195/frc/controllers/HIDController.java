@@ -68,9 +68,9 @@ public class HIDController {
 			try {
 				if (Infrastructure.getInstance().isDuringAuto() && !stoppedAuto) {
 					if (driveJoystick.isAxisInputActive()) {
-						if (Robot.mAutoModeExecutor.isSet())
-							Robot.mAutoModeExecutor.stop();
-						stoppedAuto = true;
+//						if (Robot.mAutoModeExecutor.isSet())
+//							Robot.mAutoModeExecutor.stop();
+//						stoppedAuto = true;
 					}
 				} else {
 					//User Control Interface code here
