@@ -263,12 +263,6 @@ public class HIDController {
 			}
 		}
 
-		if (Turret.getInstance().isBeakListenerEnabled()) {
-			if (Turret.getInstance().getLimitSwitchFallingEdge()) {
-
-			}
-		}
-
 		TeleopActionRunner.processActions();
 		}
 	};

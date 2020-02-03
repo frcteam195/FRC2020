@@ -1,20 +1,15 @@
 package com.team195.frc.subsystems;
 
-import com.ctre.phoenix.motorcontrol.LimitSwitchNormal;
-import com.ctre.phoenix.motorcontrol.LimitSwitchSource;
 import com.team195.frc.constants.CalConstants;
 import com.team195.frc.RobotState;
 import com.team195.frc.constants.DeviceIDConstants;
 import com.team195.frc.loops.ILooper;
 import com.team195.frc.loops.Loop;
 import com.team195.frc.paths.TrajectoryGenerator;
-import com.team195.frc.reporters.ConsoleReporter;
 import com.team195.frc.reporters.DiagnosticMessage;
-import com.team195.frc.reporters.MessageLevel;
 import com.team195.frc.reporters.ReflectingLogDataGenerator;
 import com.team195.frc.subsystems.positions.TurretPositions;
-import com.team195.lib.drivers.CKSolenoid;
-import com.team195.lib.drivers.motorcontrol.CKTalonSRX;
+import com.team195.lib.drivers.motorcontrol.CKTalonFX;
 import com.team195.lib.drivers.motorcontrol.MCControlMode;
 import com.team195.lib.drivers.motorcontrol.PDPBreaker;
 import com.team195.lib.util.CachedValue;
@@ -25,7 +20,6 @@ import com.team254.lib.geometry.Pose2d;
 import com.team254.lib.geometry.Translation2d;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Turret extends Subsystem implements InterferenceSystem {
 
@@ -33,25 +27,15 @@ public class Turret extends Subsystem implements InterferenceSystem {
 
 	private final VisionTracker mVisionTracker = VisionTracker.getInstance();
 
-	private final CKTalonSRX mTurretRotationMotor;
-	private final CKTalonSRX mBallShooterRollerMotor;
-	private final CKSolenoid mHatchBeakSolenoid;
-	private final CKSolenoid mHatchBeakFeedSolenoid;
-	private final CKSolenoid mHatchPushSolenoid;
-	private final CKSolenoid mBallPushSolenoid;
+	private final CKTalonFX mTurretRotationMotor;
 
 	private TurretControlMode mTurretControlMode = TurretControlMode.POSITION;
-	private BallShooterControlMode mBallShooterControlMode = BallShooterControlMode.OPEN_LOOP;
-
-	private AtomicBoolean beakListenerEnabled = new AtomicBoolean(true);
 
 	private final MotionInterferenceChecker turretAnyPositionCheck;
 
 	private PeriodicIO mPeriodicIO;
 	private ReflectingLogDataGenerator<PeriodicIO> mLogDataGenerator = new ReflectingLogDataGenerator<>(PeriodicIO.class);
 
-
-	private final CachedValue<Boolean> mTurretEncoderPresent;
 	private final CachedValue<Boolean> mTurretMasterHasReset;
 
 	private final ElapsedTimer loopTimer = new ElapsedTimer();
@@ -61,7 +45,7 @@ public class Turret extends Subsystem implements InterferenceSystem {
 
 		//Encoder on 50:1
 		//Turret gear is another 36:252
-		mTurretRotationMotor = new CKTalonSRX(DeviceIDConstants.kTurretMotorId, false, PDPBreaker.B30A);
+		mTurretRotationMotor = new CKTalonFX(DeviceIDConstants.kTurretMotorId, false, PDPBreaker.B30A);
 		mTurretRotationMotor.setInverted(true);
 		mTurretRotationMotor.setSensorPhase(true);
 		mTurretRotationMotor.setPIDF(CalConstants.kTurretPositionKp, CalConstants.kTurretPositionKi, CalConstants.kTurretPositionKd, CalConstants.kTurretPositionKf);
@@ -81,29 +65,10 @@ public class Turret extends Subsystem implements InterferenceSystem {
 //
 //		}
 
-		mBallShooterRollerMotor = new CKTalonSRX(DeviceIDConstants.kBallShooterMotorId, false, PDPBreaker.B30A);
-		mBallShooterRollerMotor.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen);
-		mBallShooterRollerMotor.setMCOpenLoopRampRate(CalConstants.kTurretBallShooterOpenLoopRamp);
-		mBallShooterRollerMotor.configCurrentLimit(CalConstants.kTurretBallShooterContinuousCurrentLimit, CalConstants.kTurretBallShooterPeakCurrentThreshold, CalConstants.kTurretBallShooterPeakCurrentThresholdExceedDuration);
-
-		mHatchBeakSolenoid = new CKSolenoid(DeviceIDConstants.kHatchBeakSolenoidId);
-		mHatchBeakSolenoid.set(false);
-
-		mHatchBeakFeedSolenoid = new CKSolenoid(DeviceIDConstants.kHatchBeakFeedSolenoidId);
-		mHatchBeakFeedSolenoid.set(false);
-
-		mHatchPushSolenoid = new CKSolenoid(DeviceIDConstants.kHatchPushSolenoidId);
-		mHatchPushSolenoid.set(false);
-
-		mBallPushSolenoid = new CKSolenoid(DeviceIDConstants.kBallPushSolenoidId);
-		mBallPushSolenoid.setInverted(false);
-		mBallPushSolenoid.set(false);
-
 		turretAnyPositionCheck = new MotionInterferenceChecker(MotionInterferenceChecker.LogicOperation.AND, true,
 				(t) -> (true)
 		);
 
-		mTurretEncoderPresent = new CachedValue<>(500, (t) -> mTurretRotationMotor.isEncoderPresent());
 		mTurretMasterHasReset = new CachedValue<>(500, (t) -> mTurretRotationMotor.hasMotorControllerReset() != DiagnosticMessage.NO_MSG);
 	}
 
@@ -118,22 +83,7 @@ public class Turret extends Subsystem implements InterferenceSystem {
 
 	@Override
 	public synchronized boolean isSystemFaulted() {
-		boolean systemFaulted = !mPeriodicIO.turret_encoder_present;
-
-		if (systemFaulted) {
-			ConsoleReporter.report("Turret Encoder Missing!", MessageLevel.DEFCON1);
-		}
-
-		systemFaulted |= mPeriodicIO.turret_reset;
-
-		if (systemFaulted) {
-			ConsoleReporter.report("Turret Requires Rehoming!", MessageLevel.DEFCON1);
-			setTurretControlMode(TurretControlMode.DISABLED);
-		}
-
-		mPeriodicIO.turret_loop_time = loopTimer.hasElapsed();
-
-		return systemFaulted;
+		return false;
 	}
 
 	@Override
@@ -215,20 +165,6 @@ public class Turret extends Subsystem implements InterferenceSystem {
 						mTurretRotationMotor.set(MCControlMode.Disabled, 0, 0, 0);
 						break;
 				}
-
-				switch (mBallShooterControlMode) {
-					case VELOCITY:
-						mBallShooterRollerMotor.set(MCControlMode.SmartVelocity, mPeriodicIO.ball_shooter_setpoint, 0, 0);
-						break;
-					case CURRENT:
-						mBallShooterRollerMotor.set(MCControlMode.Current, mPeriodicIO.ball_shooter_setpoint, 0, 0);
-						break;
-					case OPEN_LOOP:
-						mBallShooterRollerMotor.set(MCControlMode.PercentOut, Math.min(Math.max(mPeriodicIO.ball_shooter_setpoint, -1), 1), 0, 0);
-						break;
-					default:
-						break;
-				}
 			}
 		}
 
@@ -243,61 +179,13 @@ public class Turret extends Subsystem implements InterferenceSystem {
 		}
 	};
 
-	public synchronized boolean getLimitSwitchValue() {
-		return mPeriodicIO.hatch_limit_switch;
-	}
-
-	public synchronized boolean getLimitSwitchFallingEdge() { return mBallShooterRollerMotor.getReverseLimitFallingEdge(); }
-
-	public boolean isBeakListenerEnabled() { return beakListenerEnabled.get(); }
-
-	public void setBeakListened(boolean enabled) {
-		beakListenerEnabled.set(enabled);
-	}
-
-	public synchronized void setBallPush(boolean ballPush) {
-		mBallPushSolenoid.set(ballPush);
-	}
-
-	public synchronized void setHatchPush(boolean hatchPush) {
-		mHatchPushSolenoid.set(hatchPush);
-	}
-
-	public synchronized void setBeak(boolean closed) {
-		mHatchBeakSolenoid.set(closed);
-	}
-
-	public synchronized void setBeakFeedOff(boolean off) {
-		mHatchBeakFeedSolenoid.set(off);
-	}
-
 	public synchronized void setTurretPosition(double turretPosition) {
 		mPeriodicIO.turret_setpoint = turretPosition;
-	}
-
-	public synchronized void setBallShooterCurrent(double ballShooterCurrent) {
-		setBallShooterControlMode(BallShooterControlMode.CURRENT);
-		mPeriodicIO.ball_shooter_setpoint = ballShooterCurrent;
-	}
-
-	public synchronized void setBallShooterVelocity(double ballShooterVelocity) {
-		setBallShooterControlMode(BallShooterControlMode.VELOCITY);
-		mPeriodicIO.ball_shooter_setpoint = ballShooterVelocity;
-	}
-
-	public synchronized void setBallShooterOpenLoop(double ballShooterOutput) {
-		setBallShooterControlMode(BallShooterControlMode.OPEN_LOOP);
-		mPeriodicIO.ball_shooter_setpoint = ballShooterOutput;
 	}
 
 	public synchronized void setTurretControlMode(TurretControlMode turretControlMode) {
 		if (mTurretControlMode != turretControlMode)
 			mTurretControlMode = turretControlMode;
-	}
-
-	private synchronized void setBallShooterControlMode(BallShooterControlMode ballShooterControlMode) {
-		if (mBallShooterControlMode != ballShooterControlMode)
-			mBallShooterControlMode = ballShooterControlMode;
 	}
 
 	public boolean isTurretAtSetpoint(double posDelta) {
@@ -330,19 +218,11 @@ public class Turret extends Subsystem implements InterferenceSystem {
 		DISABLED;
 	}
 
-	public enum BallShooterControlMode {
-		VELOCITY,
-		CURRENT,
-		OPEN_LOOP;
-	}
-
 	@Override
 	public synchronized void readPeriodicInputs() {
 		loopTimer.start();
 		mPeriodicIO.turret_position = mTurretRotationMotor.getPosition();
-		mPeriodicIO.turret_encoder_present = mTurretEncoderPresent.getValue();
 		mPeriodicIO.turret_reset = mTurretMasterHasReset.getValue();
-		mPeriodicIO.hatch_limit_switch = mBallShooterRollerMotor.getReverseLimitValue();
 	}
 
 	@Override
@@ -356,10 +236,7 @@ public class Turret extends Subsystem implements InterferenceSystem {
 		// INPUTS
 		public double turret_position;
 		public double turret_setpoint;
-		public double ball_shooter_setpoint;
-		public boolean turret_encoder_present;
 		public boolean turret_reset;
-		public boolean hatch_limit_switch;
 
 		// Outputs
 		public double turret_loop_time;
