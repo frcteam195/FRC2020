@@ -1,7 +1,5 @@
 package com.team195.frc.subsystems;
 
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMaxLowLevel;
 import com.team195.frc.constants.CalConstants;
 import com.team195.frc.constants.DeviceIDConstants;
 import com.team195.frc.constants.TestConstants;
@@ -12,7 +10,6 @@ import com.team195.frc.RobotState;
 import com.team195.frc.reporters.ConsoleReporter;
 import com.team195.frc.reporters.MessageLevel;
 import com.team195.frc.reporters.ReflectingLogDataGenerator;
-import com.team195.lib.drivers.CKDoubleSolenoid;
 import com.team195.lib.drivers.CKIMU;
 import com.team195.lib.drivers.NavX;
 import com.team195.lib.drivers.motorcontrol.*;
@@ -39,8 +36,7 @@ public class Drive extends Subsystem {
 
 	private static final int kLowGearVelocityControlSlot = 0;
 	private static Drive mInstance = new Drive();
-	private final CKTalonSRX mLeftMaster, mRightMaster, mLeftSlaveA, mRightSlaveA, mLeftSlaveB, mRightSlaveB;
-	private final CKDoubleSolenoid mPTOShifter;
+	private final CKTalonFX mLeftMaster, mRightMaster, mLeftSlaveA, mRightSlaveA, mLeftSlaveB, mRightSlaveB;
 	private DriveControlState mDriveControlState;
 	private CKIMU mGyro;
 	private PeriodicIO mPeriodicIO;
@@ -54,8 +50,6 @@ public class Drive extends Subsystem {
 	private AtomicBoolean mForceBrakeUpdate = new AtomicBoolean(false);
 	private boolean mPrevBrakeMode;
 
-	private final CachedValue<Boolean> mLeftDriveEncoderPresent;
-	private final CachedValue<Boolean> mRightDriveEncoderPresent;
 	private final CachedValue<Boolean> mGyroPresent;
 
 	private final ElapsedTimer loopTimer = new ElapsedTimer();
@@ -115,51 +109,31 @@ public class Drive extends Subsystem {
 	private Drive() {
 		mPeriodicIO = new PeriodicIO();
 
-		mLeftMaster = new CKSparkMax(DeviceIDConstants.kLeftDriveMasterId, CANSparkMaxLowLevel.MotorType.kBrushless, true, PDPBreaker.B40A);
-		mLeftMaster.addConfigStatement((t) -> mLeftMaster.setInverted(false));
-		mLeftMaster.addConfigStatement((t) -> mLeftMaster.setPIDF(CalConstants.kDriveLowGearVelocityKp, CalConstants.kDriveLowGearVelocityKi, CalConstants.kDriveLowGearVelocityKd, CalConstants.kDriveLowGearVelocityKf));
-		mLeftMaster.addConfigStatement((t) -> mLeftMaster.setDFilter(CalConstants.kDriveLowGearVelocityDFilter));
-		mLeftMaster.addConfigStatement((t) -> mLeftMaster.setMotionParameters(CalConstants.kDriveLowGearPositionCruiseVel, CalConstants.kDriveLowGearPositionAccel));
-		mLeftMaster.addConfigStatement((t) -> mLeftMaster.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim));
-		mLeftMaster.addConfigStatement((t) -> mLeftMaster.setClosedLoopRampRate(CalConstants.kDriveVoltageRampRate));
-		mLeftMaster.setEncoderFactor(1);
-		mLeftMaster.setAllowedClosedLoopError(0);
-		mLeftMaster.writeToFlash();
+		mLeftMaster = new CKTalonFX(DeviceIDConstants.kLeftDriveMasterId, true, PDPBreaker.B40A);
+		mLeftMaster.setInverted(false);
+		mLeftMaster.setPIDF(CalConstants.kDriveLowGearVelocityKp, CalConstants.kDriveLowGearVelocityKi, CalConstants.kDriveLowGearVelocityKd, CalConstants.kDriveLowGearVelocityKf);
+		mLeftMaster.setDFilter(CalConstants.kDriveLowGearVelocityDFilter);
+		mLeftMaster.setMotionParameters(CalConstants.kDriveLowGearPositionCruiseVel, CalConstants.kDriveLowGearPositionAccel);
+		mLeftMaster.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim);
 
-		mLeftSlaveA = new CKSparkMax(DeviceIDConstants.kLeftDriveSlaveAId, CANSparkMaxLowLevel.MotorType.kBrushless, mLeftMaster, PDPBreaker.B40A, false);
-		mLeftSlaveA.addConfigStatement((t) -> mLeftSlaveA.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim));
-		mLeftSlaveA.addConfigStatement((t) -> mLeftSlaveA.setClosedLoopRampRate(CalConstants.kDriveVoltageRampRate));
-		mLeftSlaveA.writeToFlash();
+		mLeftSlaveA = new CKTalonFX(DeviceIDConstants.kLeftDriveSlaveAId, mLeftMaster, PDPBreaker.B40A, false);
+		mLeftSlaveA.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim);
 
-		mLeftSlaveB = new CKSparkMax(DeviceIDConstants.kLeftDriveSlaveBId, CANSparkMaxLowLevel.MotorType.kBrushless, mLeftMaster, PDPBreaker.B40A, false);
-		mLeftSlaveB.addConfigStatement((t) -> mLeftSlaveB.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim));
-		mLeftSlaveB.addConfigStatement((t) -> mLeftSlaveB.setClosedLoopRampRate(CalConstants.kDriveVoltageRampRate));
+		mLeftSlaveB = new CKTalonFX(DeviceIDConstants.kLeftDriveSlaveBId, mLeftMaster, PDPBreaker.B40A, false);
+		mLeftSlaveB.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim);
 
-		mLeftSlaveB.writeToFlash();
 
-		mRightMaster = new CKSparkMax(DeviceIDConstants.kRightDriveMasterId, CANSparkMaxLowLevel.MotorType.kBrushless, true, PDPBreaker.B40A);
-		mRightMaster.addConfigStatement((t) -> mRightMaster.setInverted(true));
-		mRightMaster.addConfigStatement((t) -> mRightMaster.setPIDF(CalConstants.kDriveLowGearVelocityKp, CalConstants.kDriveLowGearVelocityKi, CalConstants.kDriveLowGearVelocityKd, CalConstants.kDriveLowGearVelocityKf));
-		mRightMaster.addConfigStatement((t) -> mRightMaster.setDFilter(CalConstants.kDriveLowGearVelocityDFilter));
-		mRightMaster.addConfigStatement((t) -> mRightMaster.setMotionParameters(CalConstants.kDriveLowGearPositionCruiseVel, CalConstants.kDriveLowGearPositionAccel));
-		mRightMaster.addConfigStatement((t) -> mRightMaster.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim));
-		mRightMaster.addConfigStatement((t) -> mRightMaster.setClosedLoopRampRate(CalConstants.kDriveVoltageRampRate));
-		mRightMaster.setEncoderFactor(1);
-		mLeftMaster.setAllowedClosedLoopError(0);
-		mRightMaster.writeToFlash();
+		mRightMaster = new CKTalonFX(DeviceIDConstants.kRightDriveMasterId, true, PDPBreaker.B40A);
+		mRightMaster.setInverted(true);
+		mRightMaster.setPIDF(CalConstants.kDriveLowGearVelocityKp, CalConstants.kDriveLowGearVelocityKi, CalConstants.kDriveLowGearVelocityKd, CalConstants.kDriveLowGearVelocityKf);
+		mRightMaster.setMotionParameters(CalConstants.kDriveLowGearPositionCruiseVel, CalConstants.kDriveLowGearPositionAccel);
+		mRightMaster.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim);
 
-		mRightSlaveA = new CKSparkMax(DeviceIDConstants.kRightDriveSlaveAId, CANSparkMaxLowLevel.MotorType.kBrushless, mRightMaster, PDPBreaker.B40A, false);
-		mRightSlaveA.addConfigStatement((t) -> mRightSlaveA.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim));
-		mRightSlaveA.addConfigStatement((t) -> mRightSlaveA.setClosedLoopRampRate(CalConstants.kDriveVoltageRampRate));
-		mRightSlaveA.writeToFlash();
+		mRightSlaveA = new CKTalonFX(DeviceIDConstants.kRightDriveSlaveAId, mRightMaster, PDPBreaker.B40A, false);
+		mRightSlaveA.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim);
 
-		mRightSlaveB = new CKSparkMax(DeviceIDConstants.kRightDriveSlaveBId, CANSparkMaxLowLevel.MotorType.kBrushless, mRightMaster, PDPBreaker.B40A, false);
-		mRightSlaveB.addConfigStatement((t) -> mRightSlaveB.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim));
-		mRightSlaveB.addConfigStatement((t) -> mRightSlaveB.setClosedLoopRampRate(CalConstants.kDriveVoltageRampRate));
-		mRightSlaveB.writeToFlash();
-
-		mPTOShifter = new CKDoubleSolenoid(DeviceIDConstants.kPTOShifterSolenoidId);
-		mPTOShifter.set(false);
+		mRightSlaveB = new CKTalonFX(DeviceIDConstants.kRightDriveSlaveBId, mRightMaster, PDPBreaker.B40A, false);
+		mRightSlaveB.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim);
 
 		reloadGains();
 
@@ -173,8 +147,6 @@ public class Drive extends Subsystem {
 
 		mMotionPlanner = new DriveMotionPlanner();
 
-		mLeftDriveEncoderPresent = new CachedValue<>(500, (t) -> mElevator.isLeftDriveEncoderPresent());
-		mRightDriveEncoderPresent = new CachedValue<>(500, (t) -> mElevator.isRightDriveEncoderPresent());
 		mGyroPresent = new CachedValue<>(500, (t) -> mGyro.isPresent());
 
 //		TuneablePIDOSC x;
@@ -185,23 +157,6 @@ public class Drive extends Subsystem {
 //		} catch (Exception ignored) {
 //
 //		}
-	}
-
-	public void configureClimbCurrentLimit() {
-		setBrakeMode(true);
-		mLeftMaster.addConfigStatement((t) -> mLeftMaster.setSmartCurrentLimit(CalConstants.kDriveLeftClimbCurrentLim));
-		mLeftSlaveA.addConfigStatement((t) -> mLeftSlaveA.setSmartCurrentLimit(CalConstants.kDriveLeftClimbCurrentLim));
-		mLeftSlaveB.addConfigStatement((t) -> mLeftSlaveB.setSmartCurrentLimit(CalConstants.kDriveLeftClimbCurrentLim));
-
-		mRightMaster.addConfigStatement((t) -> mRightMaster.setSmartCurrentLimit(CalConstants.kDriveRightClimbCurrentLim));
-		mRightSlaveA.addConfigStatement((t) -> mRightSlaveA.setSmartCurrentLimit(CalConstants.kDriveRightClimbCurrentLim));
-		mRightSlaveB.addConfigStatement((t) -> mRightSlaveB.setSmartCurrentLimit(CalConstants.kDriveRightClimbCurrentLim));
-	}
-
-	public void configureRetractCurrentLimit() {
-		mLeftMaster.addConfigStatement((t) -> mLeftMaster.setSmartCurrentLimit(CalConstants.kDriveLeftRetractCurrentLim));
-		mLeftSlaveA.addConfigStatement((t) -> mLeftSlaveA.setSmartCurrentLimit(CalConstants.kDriveLeftRetractCurrentLim));
-		mLeftSlaveB.addConfigStatement((t) -> mLeftSlaveB.setSmartCurrentLimit(CalConstants.kDriveLeftRetractCurrentLim));
 	}
 
 	public static Drive getInstance() {
@@ -348,7 +303,6 @@ public class Drive extends Subsystem {
 	public synchronized void resetEncoders() {
         mLeftMaster.setEncoderPosition(0);
         mRightMaster.setEncoderPosition(0);
-		mElevator.zeroDriveEncoders();
 		mPeriodicIO = new PeriodicIO();
 	}
 
@@ -356,14 +310,6 @@ public class Drive extends Subsystem {
 	public void zeroSensors() {
 		setHeading(Rotation2d.identity());
 		resetEncoders();
-	}
-
-//	public double getRawLeftEncoder() {
-//		return mPeriodicIO.left_position_rotations;
-//	}
-
-	public double getRawLeftSparkEncoder() {
-		return mPeriodicIO.left_spark_position;
 	}
 
 	public double getLeftEncoderDistance() {
@@ -437,10 +383,6 @@ public class Drive extends Subsystem {
 		}
 	}
 
-	public void setPTO(boolean driveClimber) {
-		mPTOShifter.set(driveClimber);
-	}
-
 	public synchronized void reloadGains() {
 		mLeftMaster.setPIDF(CalConstants.kDriveLowGearVelocityKp, CalConstants.kDriveLowGearVelocityKi, CalConstants.kDriveLowGearVelocityKd, CalConstants.kDriveLowGearVelocityKf);
 		mLeftMaster.setIZone(CalConstants.kDriveLowGearVelocityIZone);
@@ -456,32 +398,17 @@ public class Drive extends Subsystem {
 		loopTimer.start();
 		mPeriodicIO.prev_left_rotations = mPeriodicIO.left_position_rotations;
 		mPeriodicIO.prev_right_rotations = mPeriodicIO.right_position_rotations;
-		mPeriodicIO.left_position_rotations = mElevator.getLeftDrivePosition();
-		mPeriodicIO.right_position_rotations = mElevator.getRightDrivePosition();
-		mPeriodicIO.left_velocity_RPM = mElevator.getLeftDriveVelocity();
-		mPeriodicIO.right_velocity_RPM = mElevator.getRightDriveVelocity();
+		mPeriodicIO.left_position_rotations = mLeftMaster.getPosition();
+		mPeriodicIO.right_position_rotations = mRightMaster.getPosition();
+		mPeriodicIO.left_velocity_RPM = mLeftMaster.getVelocity();
+		mPeriodicIO.right_velocity_RPM = mRightMaster.getVelocity();
 		mPeriodicIO.gyro_heading = Rotation2d.fromDegrees(mGyro.getFusedHeading()).rotateBy(mGyroOffset);
 		mPeriodicIO.gyro_roll = mGyro.getRoll();
-
-		if (mPTOShifter.isOn()) {
-			mPeriodicIO.left_spark_position = mLeftMaster.getPosition();
-			mPeriodicIO.left_drive_current = mLeftMaster.getOutputCurrent();
-			mPeriodicIO.right_drive_current = mRightMaster.getOutputCurrent();
-		}
-
-
-
-
-
-//		mPeriodicIO.left_spark_velocity = mLeftMaster.getVelocity();
-//		mPeriodicIO.right_spark_velocity = mRightMaster.getVelocity();
-
-		mPeriodicIO.left_drive_encoder_present = mLeftDriveEncoderPresent.getValue();
-		mPeriodicIO.right_drive_encoder_present = mRightDriveEncoderPresent.getValue();
+		mPeriodicIO.left_drive_current = mLeftMaster.getSupplyCurrent();
+		mPeriodicIO.right_drive_current = mRightMaster.getSupplyCurrent();
 		mPeriodicIO.gyro_present = mGyroPresent.getValue();
-
-//		mPeriodicIO.left_bus_voltage = mLeftMaster.getMCInputVoltage();
-//		mPeriodicIO.right_bus_voltage = mRightMaster.getMCInputVoltage();
+		mPeriodicIO.left_bus_voltage = mLeftMaster.getMCInputVoltage();
+		mPeriodicIO.right_bus_voltage = mRightMaster.getMCInputVoltage();
 
 
 
@@ -555,11 +482,12 @@ public class Drive extends Subsystem {
 			mRightDiagArr.add(new MotorDiagnostics("Drive Right Slave 1", mRightSlaveA, mRightMaster));
 			mRightDiagArr.add(new MotorDiagnostics("Drive Right Slave 2", mRightSlaveB, mRightMaster));
 
-			mLeftSlaveA.follow(CANSparkMax.ExternalFollower.kFollowerDisabled, 0);
-			mLeftSlaveB.follow(CANSparkMax.ExternalFollower.kFollowerDisabled, 0);
-			mRightSlaveA.follow(CANSparkMax.ExternalFollower.kFollowerDisabled, 0);
+			mLeftSlaveA.follow(mLeftMaster);
+			mLeftSlaveB.follow(mLeftMaster);
+
+			mRightSlaveA.follow(mRightMaster);
 			mRightSlaveA.setInverted(true);
-			mRightSlaveB.follow(CANSparkMax.ExternalFollower.kFollowerDisabled, 0);
+			mRightSlaveB.follow(mRightMaster);
 			mRightSlaveB.setInverted(true);
 
 			mAllMotorsDiagArr.addAll(mLeftDiagArr);
@@ -636,22 +564,14 @@ public class Drive extends Subsystem {
 
 	@Override
 	public synchronized boolean isSystemFaulted() {
-		boolean leftSensorFaulted = !mPeriodicIO.left_drive_encoder_present;
-		boolean rightSensorFaulted = !mPeriodicIO.right_drive_encoder_present;
 		boolean navXFaulted = !mPeriodicIO.gyro_present;
-
-		if (leftSensorFaulted)
-			ConsoleReporter.report("Left Drive Encoder Error", MessageLevel.DEFCON1);
-
-		if (rightSensorFaulted)
-			ConsoleReporter.report("Right Drive Encoder Error", MessageLevel.DEFCON1);
 
 		if (navXFaulted)
 			ConsoleReporter.report("NavX Error", MessageLevel.DEFCON1);
 
 		mPeriodicIO.drive_loop_time = loopTimer.hasElapsed();
 
-		return leftSensorFaulted || rightSensorFaulted || navXFaulted;
+		return navXFaulted;
 	}
 
 	public enum DriveControlState {
@@ -682,17 +602,12 @@ public class Drive extends Subsystem {
 		public double gyro_roll;
 		public Pose2d error = Pose2d.identity();
 
-		public double left_spark_position;
-		public double left_spark_velocity;
-		public double right_spark_velocity;
 		public double left_bus_voltage;
 		public double right_bus_voltage;
 
 		public double left_drive_current;
 		public double right_drive_current;
 
-		boolean left_drive_encoder_present;
-		boolean right_drive_encoder_present;
 		boolean gyro_present;
 
 		double prev_left_rotations;

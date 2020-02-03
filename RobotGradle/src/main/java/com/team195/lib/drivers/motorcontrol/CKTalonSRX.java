@@ -537,7 +537,7 @@ public class CKTalonSRX implements TuneableMotorController {
 			case Velocity:
 				return getVelocity();
 			case Current:
-				return mTalonSRX.getOutputCurrent();
+				return mTalonSRX.getSupplyCurrent();
 			default:
 				return 0;
 		}
@@ -564,7 +564,7 @@ public class CKTalonSRX implements TuneableMotorController {
 
 	@Override
 	public double getMCOutputCurrent() {
-		return mTalonSRX.getOutputCurrent();
+		return mTalonSRX.getSupplyCurrent();
 	}
 
 	@Override

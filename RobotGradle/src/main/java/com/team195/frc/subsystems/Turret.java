@@ -100,10 +100,7 @@ public class Turret extends Subsystem implements InterferenceSystem {
 		mBallPushSolenoid.set(false);
 
 		turretAnyPositionCheck = new MotionInterferenceChecker(MotionInterferenceChecker.LogicOperation.AND, true,
-				(t) -> (Elevator.getInstance().getPosition() >= ElevatorPositions.CollisionThresholdTurret - ElevatorPositions.PositionDelta),
-				(t) -> (Elevator.getInstance().getSetpoint() >= ElevatorPositions.CollisionThresholdTurret),
-				(t) -> (BallIntakeArm.getInstance().getSetpoint() == BallIntakeArmPositions.Down),
-				(t) -> (BallIntakeArm.getInstance().getPosition() < BallIntakeArmPositions.CollisionThreshold)
+				(t) -> (true)
 		);
 
 		mTurretEncoderPresent = new CachedValue<>(500, (t) -> mTurretRotationMotor.isEncoderPresent());
@@ -204,7 +201,7 @@ public class Turret extends Subsystem implements InterferenceSystem {
 							mPeriodicIO.turret_setpoint = convertTurretDegreesToRotations(mVisionTracker.getTargetHorizAngleDev());
 						//Fall through on purpose to set position -> no break;
 					case POSITION:
-						if (turretAnyPositionCheck.hasPassedConditions() || Elevator.getInstance().getPosition() > ElevatorPositions.CargoBall
+						if (turretAnyPositionCheck.hasPassedConditions() //|| Elevator.getInstance().getPosition() > ElevatorPositions.CargoBall
 							|| Math.abs(mPeriodicIO.turret_setpoint - TurretPositions.Back180) < Turret.convertTurretDegreesToRotations(10)
 							|| Math.abs(mPeriodicIO.turret_setpoint - TurretPositions.Home) < Turret.convertTurretDegreesToRotations(10))
 							mTurretRotationMotor.set(MCControlMode.MotionMagic, mPeriodicIO.turret_setpoint, 0, 0);

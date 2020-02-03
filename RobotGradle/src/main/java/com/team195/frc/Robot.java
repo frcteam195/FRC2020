@@ -53,8 +53,6 @@ public class Robot extends RealtimeRobot {
 			mSubsystemManager = SubsystemManager.getInstance(
 				RobotStateEstimator.getInstance(),
 				Drive.getInstance(),
-				Elevator.getInstance(),
-				BallIntakeArm.getInstance(),
 				Turret.getInstance(),
 				Infrastructure.getInstance(),
 				VisionTracker.getInstance()
