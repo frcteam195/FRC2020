@@ -8,27 +8,18 @@ import com.team195.frc.reporters.ConsoleReporter;
 import com.team195.frc.reporters.DiagnosticMessage;
 import com.team195.frc.reporters.MessageLevel;
 import com.team195.lib.util.CachedValue;
-import com.team195.lib.util.ThreadRateControl;
-import com.team254.lib.util.InterpolatingDouble;
-import com.team254.lib.util.InterpolatingTreeMap;
 
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-public class CKTalonFX implements TuneableMotorController {
-	//We can't extend TalonSRX due to some JNI object packing issue where following does not work
-	//it seems getBaseID() is broken on extension
-	private final TalonFX mTalonFX;
-	private final ThreadRateControl trc = new ThreadRateControl();
+public class CKTalonFX extends TalonFX implements TuneableMotorController {
 	private int currentSelectedSlot = 0;
 	private ArrayList<FeedbackConfiguration> mFeedbackConfig = new ArrayList<>();
 	private double prevOutput = Double.MIN_VALUE;
 	private final PDPBreaker motorBreaker;
 	private AtomicBoolean prevForwardLimitVal = new AtomicBoolean(false);
 	private AtomicBoolean prevReverseLimitVal = new AtomicBoolean(false);
-
-
 
 	private CachedValue<Double> localQuadPosition;
 
@@ -41,23 +32,16 @@ public class CKTalonFX implements TuneableMotorController {
 	private static final Configuration normalMasterConfig = new Configuration(10, 10, 20);
 	private static final Configuration normalSlaveConfig = new Configuration(10, 100, 100);
 
-
-	private double prevMotionVelocitySetpoint = 0;
-	private double minSetpointOutput = 0;
-	private double allowedClosedLoopError = 0;
 	private MCControlMode currentControlMode = MCControlMode.Disabled;  //Force an update
 
-	private Thread motionVoodooArbFFControlThread;
-	private double motionVoodooArbFFDemand = 0;
-	public InterpolatingTreeMap<InterpolatingDouble, InterpolatingDouble> motionVoodooArbFFLookup = new InterpolatingTreeMap<>();
 	public double absoluteEncoderOffset = 0;
 
 	private double speedNew = 0;
 
 	private CKTalonFX(int deviceId, PDPBreaker breakerCurrent, Configuration deviceConfig) {
+		super(deviceId);
 		initializeFeedbackList();
-		mTalonFX = new TalonFX(deviceId);
-		mTalonFX.configFactoryDefault();
+		super.configFactoryDefault();
 		motorBreaker = breakerCurrent;
 		doDefaultConfig(deviceConfig);
 		setBrakeCoastMode(MCNeutralMode.Brake);
@@ -71,46 +55,42 @@ public class CKTalonFX implements TuneableMotorController {
 
 	public CKTalonFX(int deviceId, CKTalonFX masterTalon, PDPBreaker breakerCurrent, boolean inverted) {
 		this(deviceId, breakerCurrent, normalSlaveConfig);
-		mTalonFX.follow(masterTalon.mTalonFX);
-		mTalonFX.setInverted(inverted);
-	}
-
-	public void follow(CKTalonFX tfx) {
-		mTalonFX.follow(tfx.mTalonFX);
+		super.follow(masterTalon);
+		super.setInverted(inverted);
 	}
 
 	private void initCachedValues() {
-		localQuadPosition = new CachedValue<>(100, (t) -> convertNativeUnitsToRotations(mTalonFX.getSensorCollection().getIntegratedSensorPosition() * (sensorInverted ? -1 : 1)));
-		forwardLimitCachedValue = new CachedValue<>(150, (t) -> mTalonFX.getSensorCollection().isFwdLimitSwitchClosed() == 1);
-		reverseLimitCachedValue = new CachedValue<>(150, (t) -> mTalonFX.getSensorCollection().isRevLimitSwitchClosed() == 1);
+		localQuadPosition = new CachedValue<>(100, (t) -> convertNativeUnitsToRotations(super.getSensorCollection().getIntegratedSensorPosition() * (sensorInverted ? -1 : 1)));
+		forwardLimitCachedValue = new CachedValue<>(150, (t) -> super.getSensorCollection().isFwdLimitSwitchClosed() == 1);
+		reverseLimitCachedValue = new CachedValue<>(150, (t) -> super.getSensorCollection().isRevLimitSwitchClosed() == 1);
 	}
 
 	public TalonFXSensorCollection getSensorCollection() {
-		return mTalonFX.getSensorCollection();
+		return super.getSensorCollection();
 	}
 
 	public void setLocalQuadPosition(double position) {
-		runTalonFunctionWithRetry((t) -> mTalonFX.getSensorCollection().setIntegratedSensorPosition(convertRotationsToNativeUnits(position), Constants.kCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.getSensorCollection().setIntegratedSensorPosition(convertRotationsToNativeUnits(position), Constants.kCANTimeoutMs));
 	}
 
 	private void doDefaultConfig(Configuration config) {
-		runTalonFunctionWithRetry((t) -> mTalonFX.clearStickyFaults(Constants.kLongCANTimeoutMs));
-		runTalonFunctionWithRetry((t) -> mTalonFX.setControlFramePeriod(ControlFrame.Control_3_General, config.CONTROL_FRAME_PERIOD_MS));
-		runTalonFunctionWithRetry((t) -> mTalonFX.setStatusFramePeriod(StatusFrame.Status_1_General, config.STATUS_FRAME_GENERAL_1_MS, Constants.kLongCANTimeoutMs));
-		runTalonFunctionWithRetry((t) -> mTalonFX.setStatusFramePeriod(StatusFrame.Status_2_Feedback0, config.STATUS_FRAME_FEEDBACK0_2_MS, Constants.kLongCANTimeoutMs));
-		runTalonFunctionWithRetry((t) -> mTalonFX.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.kLongCANTimeoutMs));
-		runTalonFunctionWithRetry((t) -> mTalonFX.configVelocityMeasurementPeriod(VelocityMeasPeriod.Period_50Ms, Constants.kLongCANTimeoutMs));
-		runTalonFunctionWithRetry((t) -> mTalonFX.configVelocityMeasurementWindow(1, Constants.kLongCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.clearStickyFaults(Constants.kLongCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.setControlFramePeriod(ControlFrame.Control_3_General, config.CONTROL_FRAME_PERIOD_MS));
+		runTalonFunctionWithRetry((t) -> super.setStatusFramePeriod(StatusFrame.Status_1_General, config.STATUS_FRAME_GENERAL_1_MS, Constants.kLongCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.setStatusFramePeriod(StatusFrame.Status_2_Feedback0, config.STATUS_FRAME_FEEDBACK0_2_MS, Constants.kLongCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.kLongCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.configVelocityMeasurementPeriod(VelocityMeasPeriod.Period_50Ms, Constants.kLongCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.configVelocityMeasurementWindow(1, Constants.kLongCANTimeoutMs));
 		configCurrentLimit(motorBreaker.value - 10, motorBreaker.value, getMSDurationForBreakerLimit(motorBreaker.value * 2, motorBreaker.value, 8));
-		runTalonFunctionWithRetry((t) -> mTalonFX.configVoltageCompSaturation(12));
+		runTalonFunctionWithRetry((t) -> super.configVoltageCompSaturation(12));
 		runTalonFunctionWithRetry((t) -> {
-			mTalonFX.enableVoltageCompensation(true);
-			return mTalonFX.getLastError();
+			super.enableVoltageCompensation(true);
+			return super.getLastError();
 		});
-		runTalonFunctionWithRetry((t) -> mTalonFX.configForwardSoftLimitEnable(false, Constants.kLongCANTimeoutMs));
-		runTalonFunctionWithRetry((t) -> mTalonFX.configReverseSoftLimitEnable(false, Constants.kLongCANTimeoutMs));
-		runTalonFunctionWithRetry((t) -> mTalonFX.configForwardLimitSwitchSource(LimitSwitchSource.Deactivated, LimitSwitchNormal.Disabled, Constants.kLongCANTimeoutMs));
-		runTalonFunctionWithRetry((t) -> mTalonFX.configReverseLimitSwitchSource(LimitSwitchSource.Deactivated, LimitSwitchNormal.Disabled, Constants.kLongCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.configForwardSoftLimitEnable(false, Constants.kLongCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.configReverseSoftLimitEnable(false, Constants.kLongCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.configForwardLimitSwitchSource(LimitSwitchSource.Deactivated, LimitSwitchNormal.Disabled, Constants.kLongCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.configReverseLimitSwitchSource(LimitSwitchSource.Deactivated, LimitSwitchNormal.Disabled, Constants.kLongCANTimeoutMs));
 	}
 
 	private void initializeFeedbackList() {
@@ -119,108 +99,58 @@ public class CKTalonFX implements TuneableMotorController {
 		}
 	}
 
-	//TODO: Fix Current Limiting for new API
-	public void configCurrentLimit(int continuousCurrentValueA, int thresholdCurrentA, int durationOverThresholdToEnableLimitingMs) {
-//		runTalonFunctionWithRetry((t) -> mTalonFX.configContinuousCurrentLimit(continuousCurrentValueA, Constants.kLongCANTimeoutMs));
-//		runTalonFunctionWithRetry((t) -> mTalonFX.configPeakCurrentLimit(thresholdCurrentA, Constants.kLongCANTimeoutMs));
-//		runTalonFunctionWithRetry((t) -> mTalonFX.configPeakCurrentDuration(durationOverThresholdToEnableLimitingMs, Constants.kLongCANTimeoutMs));
-//		runTalonFunctionWithRetry((t) -> {
-//			mTalonFX.enableCurrentLimit(true);
-//			return mTalonFX.getLastError();
-//		});
+	public ErrorCode configCurrentLimit(int continuousCurrentValueA, int thresholdCurrentA, int durationOverThresholdToEnableLimitingMs) {
+		SupplyCurrentLimitConfiguration sclc = new SupplyCurrentLimitConfiguration(true, continuousCurrentValueA, thresholdCurrentA, durationOverThresholdToEnableLimitingMs);
+		return runTalonFunctionWithRetry((t) -> super.configSupplyCurrentLimit(sclc));
 	}
 
-	public void disableCurrentLimit() {
-//		runTalonFunctionWithRetry((t) -> {
-//			mTalonFX.enableCurrentLimit(false);
-//			return mTalonFX.getLastError();
-//		});
+	public static final SupplyCurrentLimitConfiguration kCurrentLimitOff = new SupplyCurrentLimitConfiguration(false, 0, 0, 0);
+	public ErrorCode disableCurrentLimit() {
+		return runTalonFunctionWithRetry((t) -> super.configSupplyCurrentLimit(kCurrentLimitOff));
 	}
 
 	public void setFeedbackDevice(FeedbackDevice feedbackDevice) {
 		mFeedbackConfig.get(currentSelectedSlot).setFeedbackDevice(feedbackDevice);
 		mFeedbackConfig.get(currentSelectedSlot).setRemoteDeviceId(-1);
-		runTalonFunctionWithRetry((t) -> mTalonFX.configSelectedFeedbackSensor(feedbackDevice, 0, Constants.kCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.configSelectedFeedbackSensor(feedbackDevice, 0, Constants.kCANTimeoutMs));
 	}
 
 	public void setFeedbackDevice(RemoteFeedbackDevice feedbackDevice, int remoteDeviceId) {
 		mFeedbackConfig.get(currentSelectedSlot).setFeedbackDevice(feedbackDevice.getFeedbackDevice());
 		mFeedbackConfig.get(currentSelectedSlot).setRemoteDeviceId(remoteDeviceId);
-		runTalonFunctionWithRetry((t) -> mTalonFX.configRemoteFeedbackFilter(remoteDeviceId, RemoteSensorSource.TalonSRX_SelectedSensor, feedbackDevice == RemoteFeedbackDevice.RemoteSensor1 ? 1 : 0, Constants.kCANTimeoutMs));
-		runTalonFunctionWithRetry((t) -> mTalonFX.configSelectedFeedbackSensor(feedbackDevice, 0, Constants.kCANTimeoutMs));
-	}
-
-	public void configForwardLimitSwitchSource(LimitSwitchSource type, LimitSwitchNormal normalOpenOrClose) {
-		runTalonFunctionWithRetry((t) -> mTalonFX.configForwardLimitSwitchSource(type, normalOpenOrClose, Constants.kCANTimeoutMs));
-	}
-
-	public void configForwardLimitSwitchSource(RemoteLimitSwitchSource type, LimitSwitchNormal normalOpenOrClose, int deviceID) {
-		runTalonFunctionWithRetry((t) -> mTalonFX.configReverseLimitSwitchSource(type, normalOpenOrClose, deviceID, Constants.kCANTimeoutMs));
-	}
-
-
-	public void configReverseLimitSwitchSource(LimitSwitchSource type, LimitSwitchNormal normalOpenOrClose) {
-		runTalonFunctionWithRetry((t) -> mTalonFX.configReverseLimitSwitchSource(type, normalOpenOrClose, Constants.kCANTimeoutMs));
-	}
-
-	public void configReverseLimitSwitchSource(RemoteLimitSwitchSource type, LimitSwitchNormal normalOpenOrClose, int deviceID) {
-		runTalonFunctionWithRetry((t) -> mTalonFX.configReverseLimitSwitchSource(type, normalOpenOrClose, deviceID, Constants.kCANTimeoutMs));
-	}
-
-	public void configZeroOnLimit() {
-		runTalonFunctionWithRetry((t) -> mTalonFX.configClearPositionOnLimitR(true, Constants.kCANTimeoutMs));
-	}
-
-	public void setSensorPhase(boolean inverted) {
-		sensorInverted = inverted;
-		runTalonFunctionWithRetry((t) -> {
-			mTalonFX.setSensorPhase(inverted);
-			return mTalonFX.getLastError();
-		});
-	}
-
-	public void setInverted(boolean inverted) {
-		runTalonFunctionWithRetry((t) -> {
-			mTalonFX.setInverted(inverted);
-			return mTalonFX.getLastError();
-		});
+		runTalonFunctionWithRetry((t) -> super.configRemoteFeedbackFilter(remoteDeviceId, RemoteSensorSource.TalonSRX_SelectedSensor, feedbackDevice == RemoteFeedbackDevice.RemoteSensor1 ? 1 : 0, Constants.kCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.configSelectedFeedbackSensor(feedbackDevice, 0, Constants.kCANTimeoutMs));
 	}
 
 	public void setInverted(InvertType invertType) {
 		runTalonFunctionWithRetry((t) -> {
-			mTalonFX.setInverted(invertType);
-			return mTalonFX.getLastError();
+			super.setInverted(invertType);
+			return super.getLastError();
 		});
 	}
 
-	public void configClosedloopRamp(double secondsFromNeutralToFull) {
+	@Override
+	public ErrorCode configClosedloopRamp(double secondsFromNeutralToFull) {
 		mFeedbackConfig.get(currentSelectedSlot).setClosedLoopRampRate(secondsFromNeutralToFull);
-		runTalonFunctionWithRetry((t) -> mTalonFX.configClosedloopRamp(secondsFromNeutralToFull, Constants.kCANTimeoutMs));
+		return runTalonFunctionWithRetry((t) -> super.configClosedloopRamp(secondsFromNeutralToFull, Constants.kCANTimeoutMs));
 	}
 
-	public void configForwardSoftLimitThreshold(double rotations) {
-		runTalonFunctionWithRetry((t) -> mTalonFX.configForwardSoftLimitThreshold(convertRotationsToNativeUnits(rotations), Constants.kCANTimeoutMs));
+	public ErrorCode configForwardSoftLimitThreshold(double rotations) {
+		return runTalonFunctionWithRetry((t) -> super.configForwardSoftLimitThreshold(convertRotationsToNativeUnits(rotations), Constants.kCANTimeoutMs));
 	}
 
-	public void configForwardSoftLimitEnable(boolean enabled) {
-		runTalonFunctionWithRetry((t) -> mTalonFX.configForwardSoftLimitEnable(enabled, Constants.kCANTimeoutMs));
+	@Override
+	public ErrorCode configForwardSoftLimitEnable(boolean enabled) {
+		return runTalonFunctionWithRetry((t) -> super.configForwardSoftLimitEnable(enabled, Constants.kCANTimeoutMs));
 	}
 
 	public void configReverseSoftLimitThreshold(double rotations) {
-		runTalonFunctionWithRetry((t) -> mTalonFX.configReverseSoftLimitThreshold(convertRotationsToNativeUnits(rotations), Constants.kCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.configReverseSoftLimitThreshold(convertRotationsToNativeUnits(rotations), Constants.kCANTimeoutMs));
 	}
 
-	public void configReverseSoftLimitEnable(boolean enabled) {
-		runTalonFunctionWithRetry((t) -> mTalonFX.configReverseSoftLimitEnable(enabled, Constants.kCANTimeoutMs));
-	}
-
-	public double getLocalQuadPosition() {
-		if (mFeedbackConfig.get(currentSelectedSlot).feedbackDevice == FeedbackDevice.CTRE_MagEncoder_Relative) {
-			return getPosition();
-		}
-		else {
-			return localQuadPosition.getValue();
-		}
+	@Override
+	public ErrorCode configReverseSoftLimitEnable(boolean enabled) {
+		return runTalonFunctionWithRetry((t) -> super.configReverseSoftLimitEnable(enabled, Constants.kCANTimeoutMs));
 	}
 
 	public synchronized void setAbsoluteEncoderOffset(double offset) {
@@ -233,7 +163,7 @@ public class CKTalonFX implements TuneableMotorController {
 	 * @param pidIdx PID ID, 0 for main, 1 for aux
 	 */
 	public void selectProfileSlot(int slotIdx, int pidIdx) {
-		mTalonFX.selectProfileSlot(slotIdx, pidIdx);
+		super.selectProfileSlot(slotIdx, pidIdx);
 		setCurrentSlotValue(slotIdx);
 		if (currentSelectedSlot < mFeedbackConfig.size()) {
 			configClosedloopRamp(mFeedbackConfig.get(currentSelectedSlot).closedLoopRampRate);
@@ -248,8 +178,6 @@ public class CKTalonFX implements TuneableMotorController {
 					setFeedbackDevice(f);
 					break;
 			}
-//			trc.start(true);
-//			trc.doRateControl(100);
 		}
 	}
 
@@ -260,26 +188,28 @@ public class CKTalonFX implements TuneableMotorController {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("General Status Frame 1: " + mTalonFX.getStatusFramePeriod(StatusFrameEnhanced.Status_1_General, Constants.kLongCANTimeoutMs) + "\r\n");
-		sb.append("General Status Frame 2: " + mTalonFX.getStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0, Constants.kLongCANTimeoutMs) + "\r\n");
-		sb.append("General Status Frame 3: " + mTalonFX.getStatusFramePeriod(StatusFrameEnhanced.Status_3_Quadrature, Constants.kLongCANTimeoutMs) + "\r\n");
-		sb.append("General Status Frame 4: " + mTalonFX.getStatusFramePeriod(StatusFrameEnhanced.Status_4_AinTempVbat, Constants.kLongCANTimeoutMs) + "\r\n");
-		sb.append("General Status Frame 6: " + mTalonFX.getStatusFramePeriod(StatusFrameEnhanced.Status_6_Misc, Constants.kLongCANTimeoutMs) + "\r\n");
-		sb.append("General Status Frame 7: " + mTalonFX.getStatusFramePeriod(StatusFrameEnhanced.Status_7_CommStatus, Constants.kLongCANTimeoutMs) + "\r\n");
-		sb.append("General Status Frame 8: " + mTalonFX.getStatusFramePeriod(StatusFrameEnhanced.Status_8_PulseWidth, Constants.kLongCANTimeoutMs) + "\r\n");
-		sb.append("General Status Frame 9: " + mTalonFX.getStatusFramePeriod(StatusFrameEnhanced.Status_9_MotProfBuffer, Constants.kLongCANTimeoutMs) + "\r\n");
-		sb.append("General Status Frame 10: " + mTalonFX.getStatusFramePeriod(StatusFrame.Status_10_Targets, Constants.kLongCANTimeoutMs) + "\r\n");
-		sb.append("General Status Frame 11: " + mTalonFX.getStatusFramePeriod(StatusFrameEnhanced.Status_11_UartGadgeteer, Constants.kLongCANTimeoutMs) + "\r\n");
-		sb.append("General Status Frame 12: " + mTalonFX.getStatusFramePeriod(StatusFrameEnhanced.Status_12_Feedback1, Constants.kLongCANTimeoutMs) + "\r\n");
-		sb.append("General Status Frame 13: " + mTalonFX.getStatusFramePeriod(StatusFrameEnhanced.Status_13_Base_PIDF0, Constants.kLongCANTimeoutMs) + "\r\n");
-		sb.append("General Status Frame 14: " + mTalonFX.getStatusFramePeriod(StatusFrameEnhanced.Status_14_Turn_PIDF1, Constants.kLongCANTimeoutMs) + "\r\n");
+		sb.append("General Status Frame 1: " + super.getStatusFramePeriod(StatusFrameEnhanced.Status_1_General, Constants.kLongCANTimeoutMs) + "\r\n");
+		sb.append("General Status Frame 2: " + super.getStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0, Constants.kLongCANTimeoutMs) + "\r\n");
+		sb.append("General Status Frame 3: " + super.getStatusFramePeriod(StatusFrameEnhanced.Status_3_Quadrature, Constants.kLongCANTimeoutMs) + "\r\n");
+		sb.append("General Status Frame 4: " + super.getStatusFramePeriod(StatusFrameEnhanced.Status_4_AinTempVbat, Constants.kLongCANTimeoutMs) + "\r\n");
+		sb.append("General Status Frame 6: " + super.getStatusFramePeriod(StatusFrameEnhanced.Status_6_Misc, Constants.kLongCANTimeoutMs) + "\r\n");
+		sb.append("General Status Frame 7: " + super.getStatusFramePeriod(StatusFrameEnhanced.Status_7_CommStatus, Constants.kLongCANTimeoutMs) + "\r\n");
+		sb.append("General Status Frame 8: " + super.getStatusFramePeriod(StatusFrameEnhanced.Status_8_PulseWidth, Constants.kLongCANTimeoutMs) + "\r\n");
+		sb.append("General Status Frame 9: " + super.getStatusFramePeriod(StatusFrameEnhanced.Status_9_MotProfBuffer, Constants.kLongCANTimeoutMs) + "\r\n");
+		sb.append("General Status Frame 10: " + super.getStatusFramePeriod(StatusFrame.Status_10_Targets, Constants.kLongCANTimeoutMs) + "\r\n");
+		sb.append("General Status Frame 11: " + super.getStatusFramePeriod(StatusFrameEnhanced.Status_11_UartGadgeteer, Constants.kLongCANTimeoutMs) + "\r\n");
+		sb.append("General Status Frame 12: " + super.getStatusFramePeriod(StatusFrameEnhanced.Status_12_Feedback1, Constants.kLongCANTimeoutMs) + "\r\n");
+		sb.append("General Status Frame 13: " + super.getStatusFramePeriod(StatusFrameEnhanced.Status_13_Base_PIDF0, Constants.kLongCANTimeoutMs) + "\r\n");
+		sb.append("General Status Frame 14: " + super.getStatusFramePeriod(StatusFrameEnhanced.Status_14_Turn_PIDF1, Constants.kLongCANTimeoutMs) + "\r\n");
 		return sb.toString();
 	}
 
-	@Deprecated
-	public void set(ControlMode mode, double outputValue) {
-		set(MCControlMode.valueOf(mode), outputValue, currentSelectedSlot, 0);
-	}
+	// DO NOT OVERRIDE THIS SET
+	// THIS WILL BREAK ALL FOLLOWERS, AS IT IS USED INTERNALLY
+//	@Deprecated
+//	public void set(ControlMode mode, double outputValue) {
+//		set(MCControlMode.valueOf(mode), outputValue, currentSelectedSlot, 0);
+//	}
 
 	@Deprecated
 	public void set(ControlMode mode, double demand0, double demand1) {
@@ -295,73 +225,21 @@ public class CKTalonFX implements TuneableMotorController {
 			currentControlMode = controlMode;
 
 			if (controlMode == MCControlMode.MotionVoodooArbFF) {
-				motionVoodooArbFFDemand = demand;
-				startMotionVoodooArbFFControlThread();
+
 			} else {
 				demand = convertDemandToNativeUnits(controlMode, demand);
-				mTalonFX.set(controlMode.CTRE(), demand, DemandType.ArbitraryFeedForward, arbitraryFeedForward);
+				super.set(controlMode.CTRE(), demand, DemandType.ArbitraryFeedForward, arbitraryFeedForward);
 				prevOutput = demand + arbitraryFeedForward;
 			}
 		}
 	}
 
-	private void startMotionVoodooArbFFControlThread() {
-		if (motionVoodooArbFFControlThread != null) {
-			if (!motionVoodooArbFFControlThread.isAlive()) {
-				resetMotionVoodooArbFFLambda();
-				motionVoodooArbFFControlThread.start();
-			}
-		} else {
-			resetMotionVoodooArbFFLambda();
-			motionVoodooArbFFControlThread.start();
-		}
-	}
-
-	private void resetMotionVoodooArbFFLambda() {
-		//Instantiate Motion Magic Thread
-		motionVoodooArbFFControlThread = new Thread(() -> {
-			ThreadRateControl trc = new ThreadRateControl();
-			trc.start();
-			while (currentControlMode == MCControlMode.MotionVoodooArbFF) {
-				double demandStep = generateMotionVoodooArbFFValue(getPosition(), motionVoodooArbFFDemand, getVelocity(), trc.getDt());
-				prevMotionVelocitySetpoint = demandStep;
-				demandStep = Math.abs(demandStep) < minSetpointOutput ? 0 : demandStep;
-				double arbFF = motionVoodooArbFFLookup.getInterpolated(new InterpolatingDouble(getPosition() - absoluteEncoderOffset)).value;
-				mTalonFX.set(ControlMode.Velocity, convertDemandToNativeUnits(MCControlMode.MotionVoodooArbFF, demandStep), DemandType.ArbitraryFeedForward, arbFF);
-//				ConsoleReporter.report("ArbFF: " + arbFF + ", OutputDC: " + getMCOutputPercent() + ", Pos: " + getPosition() + ", Spd: " + demandStep);
-				trc.doRateControl(10);
-			}
-		});
-	}
-
-	private double generateMotionVoodooArbFFValue(double position, double setpoint, double speed, double dt) {
-		double motionVoodooArbFFVelocity = mFeedbackConfig.get(currentSelectedSlot).motionMagicVel;
-		double motionVoodooArbFFMaxAccel = mFeedbackConfig.get(currentSelectedSlot).motionMagicAccel;
-
-		double diffErr = setpoint - position;
-		double diffSign = Math.copySign(1.0, diffErr);
-		diffErr = Math.abs(diffErr);
-
-		if (motionVoodooArbFFVelocity == 0 || motionVoodooArbFFMaxAccel == 0 || diffErr <= allowedClosedLoopError)
-			return 0;
-
-		double decelVelocity = Math.sqrt(diffErr * 2.0 / (motionVoodooArbFFMaxAccel * 60.0)) * (motionVoodooArbFFVelocity * 60.0);
-
-		speedNew = prevMotionVelocitySetpoint + (motionVoodooArbFFMaxAccel * dt * diffSign);
-		double absoluteSpeed = Math.abs(speedNew);
-		speedNew = absoluteSpeed > motionVoodooArbFFVelocity ? Math.copySign(motionVoodooArbFFVelocity, speedNew) : speedNew;
-
-		speedNew = absoluteSpeed <= decelVelocity ? speedNew : Math.copySign(decelVelocity, speedNew);
-		speedNew = absoluteSpeed <= minSetpointOutput ? 0 : speedNew;
-		return speedNew;
-	}
-
 	@Override
 	public void setPIDF(double kP, double kI, double kD, double kF) {
-		runTalonFunctionWithRetry((t) -> mTalonFX.config_kP(currentSelectedSlot, kP, Constants.kCANTimeoutMs));
-		runTalonFunctionWithRetry((t) -> mTalonFX.config_kI(currentSelectedSlot, kI, Constants.kCANTimeoutMs));
-		runTalonFunctionWithRetry((t) -> mTalonFX.config_kD(currentSelectedSlot, kD, Constants.kCANTimeoutMs));
-		runTalonFunctionWithRetry((t) -> mTalonFX.config_kF(currentSelectedSlot, kF, Constants.kCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.config_kP(currentSelectedSlot, kP, Constants.kCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.config_kI(currentSelectedSlot, kI, Constants.kCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.config_kD(currentSelectedSlot, kD, Constants.kCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.config_kF(currentSelectedSlot, kF, Constants.kCANTimeoutMs));
 	}
 
 	@Override
@@ -371,22 +249,22 @@ public class CKTalonFX implements TuneableMotorController {
 
 	@Override
 	public void setIZone(double iZone) {
-		runTalonFunctionWithRetry((t) -> mTalonFX.config_IntegralZone(currentSelectedSlot, (int)iZone, Constants.kCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.config_IntegralZone(currentSelectedSlot, (int)iZone, Constants.kCANTimeoutMs));
 	}
 
 	@Override
 	public void setMCIAccum(double iAccum) {
-		runTalonFunctionWithRetry((t) -> mTalonFX.setIntegralAccumulator(iAccum, 0, Constants.kCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.setIntegralAccumulator(iAccum, 0, Constants.kCANTimeoutMs));
 	}
 
 	@Override
 	public void setMaxIAccum(double maxIAccum) {
-		runTalonFunctionWithRetry((t) -> mTalonFX.configMaxIntegralAccumulator(currentSelectedSlot, maxIAccum, Constants.kCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.configMaxIntegralAccumulator(currentSelectedSlot, maxIAccum, Constants.kCANTimeoutMs));
 	}
 
 	@Override
 	public void setMCOpenLoopRampRate(double rampRate) {
-		runTalonFunctionWithRetry((t) -> mTalonFX.configOpenloopRamp(rampRate, Constants.kCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.configOpenloopRamp(rampRate, Constants.kCANTimeoutMs));
 	}
 
 	@Override
@@ -403,9 +281,9 @@ public class CKTalonFX implements TuneableMotorController {
 		mFeedbackConfig.get(currentSelectedSlot).setMotionMagicVel(cruiseVel);
 		mFeedbackConfig.get(currentSelectedSlot).setMotionMagicAccel(cruiseAccel);
 		mFeedbackConfig.get(currentSelectedSlot).setMotionMagicSCurveStrength(sCurveStrength);
-		runTalonFunctionWithRetry((t) -> mTalonFX.configMotionCruiseVelocity(convertRPMToNativeUnits(cruiseVel), Constants.kCANTimeoutMs));
-		runTalonFunctionWithRetry((t) -> mTalonFX.configMotionAcceleration(convertRPMToNativeUnits(cruiseAccel), Constants.kCANTimeoutMs));
-		runTalonFunctionWithRetry((t) -> mTalonFX.configMotionSCurveStrength(sCurveStrength, Constants.kTalonRetryCount));
+		runTalonFunctionWithRetry((t) -> super.configMotionCruiseVelocity(convertRPMToNativeUnits(cruiseVel), Constants.kCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.configMotionAcceleration(convertRPMToNativeUnits(cruiseAccel), Constants.kCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.configMotionSCurveStrength(sCurveStrength, Constants.kTalonRetryCount));
 	}
 
 	@Override
@@ -417,15 +295,15 @@ public class CKTalonFX implements TuneableMotorController {
 	@Override
 	public void setBrakeCoastMode(MCNeutralMode neutralMode) {
 		runTalonFunctionWithRetry((t) -> {
-			mTalonFX.setNeutralMode(neutralMode.CTRE());
-			return mTalonFX.getLastError();
+			super.setNeutralMode(neutralMode.CTRE());
+			return super.getLastError();
 		});
 	}
 
 	@Override
 	public void setEncoderPosition(double position) {
 		localQuadPosition.setValue(position);
-		runTalonFunctionWithRetry((t) -> mTalonFX.setSelectedSensorPosition(convertRotationsToNativeUnits(position), 0, Constants.kCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.setSelectedSensorPosition(convertRotationsToNativeUnits(position), 0, Constants.kCANTimeoutMs));
 	}
 
 	@Override
@@ -433,16 +311,18 @@ public class CKTalonFX implements TuneableMotorController {
 		configCurrentLimit(currentLimit, 0, 0);
 	}
 
-	private synchronized void runTalonFunctionWithRetry(Function<Void, ErrorCode> talonCall) {
-		boolean setSucceeded;
+	private synchronized ErrorCode runTalonFunctionWithRetry(Function<Void, ErrorCode> talonCall) {
+		ErrorCode eCode;
 		int retryCounter = 0;
 
 		do {
-			setSucceeded = talonCall.apply(null) == ErrorCode.OK;
-		} while(!setSucceeded && retryCounter++ < Constants.kTalonRetryCount);
+			eCode = talonCall.apply(null);
+		} while(eCode != ErrorCode.OK && retryCounter++ < Constants.kTalonRetryCount);
 
-		if (retryCounter >= Constants.kTalonRetryCount || !setSucceeded)
-			ConsoleReporter.report("Failed to set parameter Talon " + mTalonFX.getDeviceID() + " !!!!!!", MessageLevel.DEFCON1);
+		if (retryCounter >= Constants.kTalonRetryCount || eCode != ErrorCode.OK)
+			ConsoleReporter.report("Failed to set parameter Talon " + super.getDeviceID() + " !!!!!!", MessageLevel.DEFCON1);
+
+		return eCode;
 	}
 
 	@Override
@@ -452,8 +332,8 @@ public class CKTalonFX implements TuneableMotorController {
 
 	@Override
 	public void disableSoftLimits() {
-		runTalonFunctionWithRetry((t) -> mTalonFX.configForwardSoftLimitEnable(false, Constants.kLongCANTimeoutMs));
-		runTalonFunctionWithRetry((t) -> mTalonFX.configReverseSoftLimitEnable(false, Constants.kLongCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.configForwardSoftLimitEnable(false, Constants.kLongCANTimeoutMs));
+		runTalonFunctionWithRetry((t) -> super.configReverseSoftLimitEnable(false, Constants.kLongCANTimeoutMs));
 	}
 
 	@Override
@@ -514,7 +394,7 @@ public class CKTalonFX implements TuneableMotorController {
 					break;
 				case Disabled:
 				default:
-					mTalonFX.set(ControlMode.Disabled, 0);
+					super.set(ControlMode.Disabled, 0);
 					break;
 			}
 		}
@@ -542,7 +422,7 @@ public class CKTalonFX implements TuneableMotorController {
 			case Velocity:
 				return getVelocity();
 			case Current:
-				return mTalonFX.getSupplyCurrent();
+				return super.getSupplyCurrent();
 			default:
 				return 0;
 		}
@@ -555,13 +435,13 @@ public class CKTalonFX implements TuneableMotorController {
 //				return getMotorOutputPercent();
 			case Position:
 			case MotionMagic:
-				return convertNativeUnitsToRotations(mTalonFX.getClosedLoopTarget());
+				return convertNativeUnitsToRotations(super.getClosedLoopTarget());
 			case MotionVoodooArbFF:
-				return motionVoodooArbFFDemand;
+				return 0;
 			case Velocity:
-				return convertNativeUnitsToRPM((int) mTalonFX.getClosedLoopTarget());
+				return convertNativeUnitsToRPM((int) super.getClosedLoopTarget());
 			case Current:
-				return mTalonFX.getClosedLoopTarget();
+				return super.getClosedLoopTarget();
 			default:
 				return 0;
 		}
@@ -569,17 +449,17 @@ public class CKTalonFX implements TuneableMotorController {
 
 	@Override
 	public double getMCOutputCurrent() {
-		return mTalonFX.getSupplyCurrent();
+		return super.getSupplyCurrent();
 	}
 
 	@Override
 	public double getMCOutputPercent() {
-		return mTalonFX.getMotorOutputPercent();
+		return super.getMotorOutputPercent();
 	}
 
 	@Override
 	public int getMCID() {
-		return mTalonFX.getDeviceID();
+		return super.getDeviceID();
 	}
 
 	@Override
@@ -589,22 +469,22 @@ public class CKTalonFX implements TuneableMotorController {
 
 	@Override
 	public double getMCInputVoltage() {
-		return mTalonFX.getBusVoltage();
+		return super.getBusVoltage();
 	}
 
 	@Override
 	public double getMCOutputVoltage() {
-		return mTalonFX.getMotorOutputVoltage();
+		return super.getMotorOutputVoltage();
 	}
 
 	@Override
 	public double getPosition() {
-		return convertNativeUnitsToRotations(mTalonFX.getSelectedSensorPosition());
+		return convertNativeUnitsToRotations(super.getSelectedSensorPosition());
 	}
 
 	@Override
 	public double getVelocity() {
-		return convertNativeUnitsToRPM(mTalonFX.getSelectedSensorVelocity());
+		return convertNativeUnitsToRPM(super.getSelectedSensorVelocity());
 	}
 
 	@Override
@@ -624,15 +504,15 @@ public class CKTalonFX implements TuneableMotorController {
 
 	@Override
 	public double getMCIAccum() {
-		return mTalonFX.getIntegralAccumulator();
+		return super.getIntegralAccumulator();
 	}
 
 	@Override
 	public DiagnosticMessage hasMotorControllerReset() {
-		if (mTalonFX.hasResetOccurred()) {
-			String dMsg = "Talon" + mTalonFX.getDeviceID() + "ResetHasOccurred";
+		if (super.hasResetOccurred()) {
+			String dMsg = "Talon" + super.getDeviceID() + "ResetHasOccurred";
 			ConsoleReporter.report(dMsg, MessageLevel.DEFCON1);
-			runTalonFunctionWithRetry((t) -> mTalonFX.clearStickyFaults(Constants.kLongCANTimeoutMs));
+			runTalonFunctionWithRetry((t) -> super.clearStickyFaults(Constants.kLongCANTimeoutMs));
 			return new DiagnosticMessage(dMsg);
 		}
 
@@ -697,4 +577,3 @@ public class CKTalonFX implements TuneableMotorController {
 		}
 	}
 }
-
