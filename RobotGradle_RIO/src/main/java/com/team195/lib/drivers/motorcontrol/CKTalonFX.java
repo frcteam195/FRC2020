@@ -3,6 +3,7 @@ package com.team195.lib.drivers.motorcontrol;
 import com.ctre.phoenix.ErrorCode;
 import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
+import com.ctre.phoenix.motorcontrol.can.TalonFXConfiguration;
 import com.team195.frc.constants.Constants;
 import com.team195.frc.reporters.ConsoleReporter;
 import com.team195.frc.reporters.DiagnosticMessage;
@@ -33,6 +34,10 @@ public class CKTalonFX extends TalonFX implements TuneableMotorController {
 	private static final Configuration normalSlaveConfig = new Configuration(10, 100, 100);
 
 	private MCControlMode currentControlMode = MCControlMode.Disabled;  //Force an update
+
+	private double mKa = 0;
+	private double mKv = 0;
+	private double mVoltageCompSat = 12;
 
 	public double absoluteEncoderOffset = 0;
 
@@ -73,6 +78,16 @@ public class CKTalonFX extends TalonFX implements TuneableMotorController {
 		runTalonFunctionWithRetry((t) -> super.getSensorCollection().setIntegratedSensorPosition(convertRotationsToNativeUnits(position), Constants.kCANTimeoutMs));
 	}
 
+	@Override
+	public synchronized ErrorCode configVoltageCompSaturation(double voltageCompSat) {
+		runTalonFunctionWithRetry((t) -> super.configVoltageCompSaturation(voltageCompSat));
+		mVoltageCompSat = voltageCompSat;
+		return runTalonFunctionWithRetry((t) -> {
+			super.enableVoltageCompensation(true);
+			return super.getLastError();
+		});
+	}
+
 	private void doDefaultConfig(Configuration config) {
 		runTalonFunctionWithRetry((t) -> super.clearStickyFaults(Constants.kLongCANTimeoutMs));
 		runTalonFunctionWithRetry((t) -> super.setControlFramePeriod(ControlFrame.Control_3_General, config.CONTROL_FRAME_PERIOD_MS));
@@ -82,7 +97,7 @@ public class CKTalonFX extends TalonFX implements TuneableMotorController {
 		runTalonFunctionWithRetry((t) -> super.configVelocityMeasurementPeriod(VelocityMeasPeriod.Period_50Ms, Constants.kLongCANTimeoutMs));
 		runTalonFunctionWithRetry((t) -> super.configVelocityMeasurementWindow(1, Constants.kLongCANTimeoutMs));
 		configCurrentLimit(motorBreaker.value - 10, motorBreaker.value, getMSDurationForBreakerLimit(motorBreaker.value * 2, motorBreaker.value, 8));
-		runTalonFunctionWithRetry((t) -> super.configVoltageCompSaturation(12));
+		runTalonFunctionWithRetry((t) -> super.configVoltageCompSaturation(mVoltageCompSat));
 		runTalonFunctionWithRetry((t) -> {
 			super.enableVoltageCompensation(true);
 			return super.getLastError();
@@ -397,6 +412,25 @@ public class CKTalonFX extends TalonFX implements TuneableMotorController {
 					break;
 			}
 		}
+	}
+
+	public double getArbFFFromVelocity(double requestedVelocity, double currentVelocity, double dt) {
+		double requestedAccel = (requestedVelocity - currentVelocity) / dt;
+		double arbFFVoltageConversionFactor = (getNativeUnitsOutputRange() / mVoltageCompSat);
+		return (requestedVelocity * mKv + requestedAccel * mKa) * arbFFVoltageConversionFactor;
+	}
+
+	public synchronized void setMotorConstants(double kV, double kA) {
+		mKv = kV;
+		mKa = kA;
+	}
+
+	public double getKv() {
+		return mKv;
+	}
+
+	public double getKa() {
+		return mKa;
 	}
 
 	@Override

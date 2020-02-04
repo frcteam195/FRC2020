@@ -1,6 +1,9 @@
 package com.team195.frc.constants;
 
 import com.team195.frc.subsystems.Turret;
+import com.team254.lib.geometry.Pose2d;
+import com.team254.lib.geometry.Rotation2d;
+import com.team254.lib.geometry.Translation2d;
 
 public class CalConstants {
 	/* ROBOT PHYSICAL CONSTANTS */
@@ -18,13 +21,6 @@ public class CalConstants {
 	public static final double kDriveVIntercept = 0.30165000; //0.781046438 angular  // V
 	public static final double kDriveKv = 0.186163041;  // V per rad/s
 	public static final double kDriveKa = 0.0086739979;  // V per rad/s^2
-
-
-	// Pose of the LIDAR frame w.r.t. the robot frame
-	// TODO measure in CAD/on robot!
-	public static final double kLidarXOffset = -3.3211;
-	public static final double kLidarYOffset = 0.0;
-	public static final double kLidarYawAngleDegrees = 0.0;
 
 	// Gearing and mechanical constants.
 	public static final double kDriveDownShiftVelocity = 9.5 * 12.0;  // inches per second
@@ -108,10 +104,17 @@ public class CalConstants {
 	public static final int kTurretBallShooterPeakCurrentThreshold = 25;
 	public static final int kTurretBallShooterPeakCurrentThresholdExceedDuration = 450;
 	//Units in rotations
-	public static final double kTurretForwardSoftLimit = Turret.convertTurretDegreesToRotations(225);
-	public static final double kTurretReverseSoftLimit = -kTurretForwardSoftLimit;
+	public static final double kTurretMinDegrees = 270;
+	public static final double kTurretMaxDegrees = -kTurretMinDegrees;
+	public static final double kTurretForwardSoftLimit = Turret.convertTurretDegreesToRotations(kTurretMinDegrees);
+	public static final double kTurretReverseSoftLimit = Turret.convertTurretDegreesToRotations(kTurretMaxDegrees);
 	public static final double kTurretSmallGearTeeth = 18;
 	public static final double kTurretLargeGearTeeth = 124;
+
+	// TODO measure in CAD/on robot!
+	public static final Translation2d kVehicleToTurret = new Translation2d(0, 0); //Pose of turret w.r.t. robot
+	// TODO measure in CAD/on robot!
+	public static final Pose2d kTurretToCamera = new Pose2d(new Translation2d(0, 0), Rotation2d.fromDegrees(0)); //Pose of camera w.r.t. turret
 	///////////////////////////////////////////////////////////////////////////
 
 	//Breaker model for trip time output in seconds y = a*(current_percent_over_rating)^b + c

@@ -1,6 +1,7 @@
 package com.team195.frc;
 
 import com.team195.frc.constants.CalConstants;
+import com.team195.frc.constants.Constants;
 import com.team195.frc.subsystems.Drive;
 import com.team254.lib.geometry.Pose2d;
 import com.team254.lib.geometry.Rotation2d;
@@ -20,9 +21,7 @@ public class RobotState {
 
 	private static final int kObservationBufferSize = 100;
 
-	private static final Pose2d kVehicleToLidar = new Pose2d(
-			new Translation2d(CalConstants.kLidarXOffset, CalConstants.kLidarYOffset), Rotation2d.fromDegrees(CalConstants
-			.kLidarYawAngleDegrees));
+	private static final Translation2d kVehicleToTurret = CalConstants.kVehicleToTurret;
 
 	// FPGATimestamp -> Pose2d or Rotation2d
 	private final InterpolatingTreeMap<InterpolatingDouble, Pose2d> field_to_vehicle_ = new InterpolatingTreeMap<>(kObservationBufferSize);
@@ -68,9 +67,14 @@ public class RobotState {
 				.transformBy(Pose2d.exp(vehicle_velocity_predicted_.scaled(lookahead_time)));
 	}
 
-	public Pose2d getFieldToLidar(double timestamp) {
-		return getFieldToVehicle(timestamp).transformBy(kVehicleToLidar);
+	public Pose2d getFieldToTurret(double timestamp, double currentTurretRotationDegrees) {
+		return getFieldToVehicle(timestamp).transformBy(new Pose2d(kVehicleToTurret, Rotation2d.fromDegrees(currentTurretRotationDegrees)));
 	}
+
+	public Pose2d getLatestFieldToTurretPose(double currentTurretRotationDegrees) {
+		return field_to_vehicle_.lastEntry().getValue().transformBy(new Pose2d(kVehicleToTurret, Rotation2d.fromDegrees(currentTurretRotationDegrees)));
+	}
+
 
 	public void addFieldToVehicleObservation(double timestamp, Pose2d observation) {
 		field_to_vehicle_.put(new InterpolatingDouble(timestamp), observation);
