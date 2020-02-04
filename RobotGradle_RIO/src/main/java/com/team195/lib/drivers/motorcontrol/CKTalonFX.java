@@ -36,7 +36,7 @@ public class CKTalonFX extends TalonFX implements TuneableMotorController {
 
 	public double absoluteEncoderOffset = 0;
 
-	private double speedNew = 0;
+	private double mGearRatioToOutput = 1;
 
 	private CKTalonFX(int deviceId, PDPBreaker breakerCurrent, Configuration deviceConfig) {
 		super(deviceId);
@@ -100,8 +100,7 @@ public class CKTalonFX extends TalonFX implements TuneableMotorController {
 	}
 
 	public ErrorCode configCurrentLimit(int continuousCurrentValueA, int thresholdCurrentA, int durationOverThresholdToEnableLimitingMs) {
-		SupplyCurrentLimitConfiguration sclc = new SupplyCurrentLimitConfiguration(true, continuousCurrentValueA, thresholdCurrentA, durationOverThresholdToEnableLimitingMs);
-		return runTalonFunctionWithRetry((t) -> super.configSupplyCurrentLimit(sclc));
+		return runTalonFunctionWithRetry((t) -> super.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, continuousCurrentValueA, thresholdCurrentA, durationOverThresholdToEnableLimitingMs)));
 	}
 
 	public static final SupplyCurrentLimitConfiguration kCurrentLimitOff = new SupplyCurrentLimitConfiguration(false, 0, 0, 0);
@@ -401,6 +400,16 @@ public class CKTalonFX extends TalonFX implements TuneableMotorController {
 	}
 
 	@Override
+	public double getGearRatioToOutputMechanism() {
+		return mGearRatioToOutput;
+	}
+
+	@Override
+	public synchronized void setGearRatioToOutputMechanism(double gearRatioToOutput) {
+		mGearRatioToOutput = gearRatioToOutput;
+	}
+
+	@Override
 	public MCControlMode getMotionControlMode() {
 		return currentControlMode;
 	}
@@ -419,6 +428,7 @@ public class CKTalonFX extends TalonFX implements TuneableMotorController {
 			case MotionMagic:
 			case MotionVoodooArbFF:
 				return getPosition();
+			case MotionProfileSW:
 			case Velocity:
 				return getVelocity();
 			case Current:
@@ -438,6 +448,7 @@ public class CKTalonFX extends TalonFX implements TuneableMotorController {
 				return convertNativeUnitsToRotations(super.getClosedLoopTarget());
 			case MotionVoodooArbFF:
 				return 0;
+			case MotionProfileSW:
 			case Velocity:
 				return convertNativeUnitsToRPM((int) super.getClosedLoopTarget());
 			case Current:

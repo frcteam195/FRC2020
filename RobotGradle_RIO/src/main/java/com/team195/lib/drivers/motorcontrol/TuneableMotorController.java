@@ -68,6 +68,10 @@ public interface TuneableMotorController {
 
 	double getVelocity();
 
+	double getGearRatioToOutputMechanism();
+
+	void setGearRatioToOutputMechanism(double gearRatioToOutputMechanism);
+
 	double getSensorUnitsPerRotation();
 
 	double getVelocityRPMTimeConversionFactor();
@@ -93,19 +97,19 @@ public interface TuneableMotorController {
 	MCControlMode getMotionControlMode();
 
 	default double convertNativeUnitsToRotations(double nativeUnitsPos) {
-		return nativeUnitsPos / getSensorUnitsPerRotation();
+		return nativeUnitsPos / getSensorUnitsPerRotation() / getGearRatioToOutputMechanism();
 	}
 
 	default int convertRotationsToNativeUnits(double rotations) {
-		return (int) (rotations * getSensorUnitsPerRotation());
+		return (int) (rotations * getSensorUnitsPerRotation() * getGearRatioToOutputMechanism());
 	}
 
 	default double convertNativeUnitsToRPM(int nativeUnits) {
-		return (nativeUnits / getSensorUnitsPerRotation() * getVelocityRPMTimeConversionFactor());
+		return (nativeUnits / getSensorUnitsPerRotation() / getGearRatioToOutputMechanism() * getVelocityRPMTimeConversionFactor());
 	}
 
 	default int convertRPMToNativeUnits(double rpm) {
-		return (int) (rpm * getSensorUnitsPerRotation() / getVelocityRPMTimeConversionFactor());
+		return (int) (rpm * getSensorUnitsPerRotation() * getGearRatioToOutputMechanism() / getVelocityRPMTimeConversionFactor());
 	}
 
 	default double convertDemandToNativeUnits(MCControlMode controlMode, double demand) {
