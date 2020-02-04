@@ -202,10 +202,12 @@ public class CKTalonFX extends TalonFX implements TuneableMotorController {
 		return sb.toString();
 	}
 
-	@Deprecated
-	public void set(ControlMode mode, double outputValue) {
-		set(MCControlMode.valueOf(mode), outputValue, currentSelectedSlot, 0);
-	}
+	// DO NOT OVERRIDE THIS SET
+	// THIS WILL BREAK ALL FOLLOWERS, AS IT IS USED INTERNALLY
+//	@Deprecated
+//	public void set(ControlMode mode, double outputValue) {
+//		set(MCControlMode.valueOf(mode), outputValue, currentSelectedSlot, 0);
+//	}
 
 	@Deprecated
 	public void set(ControlMode mode, double demand0, double demand1) {
