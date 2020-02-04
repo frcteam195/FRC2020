@@ -163,15 +163,16 @@ public class Turret extends Subsystem implements InterferenceSystem {
 //							mTurretRotationMotor.set(MCControlMode.MotionMagic, 0, 0, 0);
 						break;
 					case GIMBAL:
-						Translation2d latestFieldToTarget = new Translation2d(-10, -120); //Create this from Camera Data
+						//Field to Camera -> Camera to Target -> Field to Target
+//						Translation2d latestFieldToTarget = new Translation2d(-10, -120); //Create this from Camera Data
 						Pose2d robotPose = RobotState.getInstance().getLatestFieldToVehicle().getValue();
 						Pose2d latestFieldToTurret = RobotState.getInstance().getLatestFieldToTurretPose(convertRotationsToTurretDegrees(mPeriodicIO.turret_position));
+						Translation2d latestFieldToTarget = latestFieldToTurret.transformBy(CalConstants.kTurretToCamera).transformBy(VisionTracker.getInstance().getCameraToTargetPose()).getTranslation();
 						Translation2d turretToTarget = latestFieldToTarget.getTranslation().translateBy(latestFieldToTurret.getTranslation().inverse());
 						Rotation2d robotCentricSetpoint = turretToTarget.direction().rotateBy(robotPose.getRotation().inverse());
 						double rawDegreesOut = calculateSetpointForRobotCentricRotation(convertRotationsToTurretDegrees(mPeriodicIO.turret_position), robotCentricSetpoint, CalConstants.kTurretMinDegrees, CalConstants.kTurretMinDegrees);
-						double arbFF = -mTurretRotationMotor.getArbFFFromVelocity(????,Drive.getInstance().getAngularVelocity(), mPeriodicIO.turret_loop_time);
+						double arbFF = -mTurretRotationMotor.getArbFFFromVelocity(-Drive.getInstance().getAngularVelocity() / (2 * Math.PI) * 60.0, mPeriodicIO.turret_velocity, mPeriodicIO.turret_loop_time);
 						mTurretRotationMotor.set(MCControlMode.MotionMagic, convertTurretDegreesToRotations(rawDegreesOut), 0, arbFF);
-
 						break;
 					case OPEN_LOOP:
 						mTurretRotationMotor.set(MCControlMode.PercentOut, Math.min(Math.max(mPeriodicIO.turret_setpoint, -1), 1), 0, 0);
@@ -265,6 +266,7 @@ public class Turret extends Subsystem implements InterferenceSystem {
 	public synchronized void readPeriodicInputs() {
 		loopTimer.start();
 		mPeriodicIO.turret_position = mTurretRotationMotor.getPosition();
+		mPeriodicIO.turret_velocity = mTurretRotationMotor.getVelocity();
 		mPeriodicIO.turret_reset = mTurretMasterHasReset.getValue();
 	}
 
@@ -278,6 +280,7 @@ public class Turret extends Subsystem implements InterferenceSystem {
 		//Making members public here will automatically add them to logs
 		// INPUTS
 		public double turret_position;
+		public double turret_velocity;
 		public double turret_setpoint;
 		public boolean turret_reset;
 

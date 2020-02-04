@@ -6,6 +6,8 @@ import com.team195.frc.loops.Loop;
 import com.team195.frc.reporters.ConsoleReporter;
 import com.team195.frc.reporters.ReflectingLogDataGenerator;
 import com.team195.lib.util.ElapsedTimer;
+import com.team254.lib.geometry.Pose2d;
+import com.team254.lib.geometry.Rotation2d;
 import com.team254.lib.geometry.Translation2d;
 import com.team254.lib.util.MovingAverage;
 import edu.wpi.first.networktables.NetworkTable;
@@ -19,13 +21,12 @@ public class VisionTracker extends Subsystem {
 	private PeriodicIO mPeriodicIO = new PeriodicIO();
 	private ReflectingLogDataGenerator<PeriodicIO> mLogDataGenerator = new ReflectingLogDataGenerator<>(PeriodicIO.class);
 
-	private TargetMode mTargetMode = TargetMode.HATCH;
+	private TargetMode mTargetMode = TargetMode.AUTO_TARGET;
 	private boolean mVisionEnabled = false;
 
 	private NetworkTable mCurrentTargetingLimelightNT;
 
-	private NetworkTable limelightFrontNT = NetworkTableInstance.getDefault().getTable("limelight-turret");
-	private NetworkTable limelightBackNT = NetworkTableInstance.getDefault().getTable("limelight-back");
+	private NetworkTable limelightTurret = NetworkTableInstance.getDefault().getTable("limelight-turret");
 
 	private final ElapsedTimer loopTimer = new ElapsedTimer();
 
@@ -55,16 +56,12 @@ public class VisionTracker extends Subsystem {
 		public void onLoop(double timestamp) {
 			synchronized (VisionTracker.this) {
 				switch (mTargetMode) {
-					case ROCKET_BALL:
+					case AUTO_TARGET:
 						mPeriodicIO.pipelineFront = mVisionEnabled ? 1 : 0;
-						mCurrentTargetingLimelightNT = limelightFrontNT;
+						mCurrentTargetingLimelightNT = limelightTurret;
 						break;
-					case HATCH:
-					case HATCH_AUTOSKEW:
-					case CARGO_BALL:
 					default:
-						mPeriodicIO.pipelineBack = mVisionEnabled ? 1 : 0;
-						mCurrentTargetingLimelightNT = limelightBackNT;
+						mPeriodicIO.pipelineFront = mVisionEnabled ? 1 : 0;
 						break;
 				}
 			}
@@ -123,10 +120,6 @@ public class VisionTracker extends Subsystem {
 		return mVisionEnabled ? mPeriodicIO.targetVerticalDeviation : 0;
 	}
 
-	public synchronized double getSkewFactor() {
-		return mPeriodicIO.calculatedSkewFactor.getAverage();
-	}
-
 	public synchronized void setVisionEnabled(boolean enabled) {
 		mVisionEnabled = enabled;
 	}
@@ -137,6 +130,10 @@ public class VisionTracker extends Subsystem {
 
 	public double getTargetSkew() {
 		return mPeriodicIO.targetSkew;
+	}
+
+	public Pose2d getCameraToTargetPose() {
+		return mPeriodicIO.cameraToTargetPose;
 	}
 
 	@Override
@@ -160,38 +157,8 @@ public class VisionTracker extends Subsystem {
 				mPeriodicIO.targetHorizontalSide = mCurrentTargetingLimelightNT.getEntry("thor").getDouble(0);
 				mPeriodicIO.targetVerticalSide = mCurrentTargetingLimelightNT.getEntry("tvert").getDouble(0);
 				mPeriodicIO.getPipelineValue = mCurrentTargetingLimelightNT.getEntry("getpipe").getDouble(0);
-				mPeriodicIO.cameraTranslationRotation = mCurrentTargetingLimelightNT.getEntry("camtran").getDouble(0);
-
-//				try {
-//					double xArr[] = mCurrentTargetingLimelightNT.getEntry("tcornx").getDoubleArray(new double[]{0});
-//					double yArr[] = mCurrentTargetingLimelightNT.getEntry("tcorny").getDoubleArray(new double[]{0});
-//
-//					if (xArr.length == yArr.length && xArr.length > 4) {
-//						mPeriodicIO.pointArray.clear();
-//						for (int i = 0; i < xArr.length; i++) {
-//							mPeriodicIO.pointArray.add(new Translation2d(xArr[i], yArr[i]));
-//						}
-//
-//						Translation2d upperLeftPoint = mPeriodicIO.pointArray.get(0);
-//						Translation2d lowerLeftPoint = mPeriodicIO.pointArray.get(1);
-//						Translation2d lowerRightPoint = mPeriodicIO.pointArray.get(yArr.length - 2);
-//						Translation2d upperRightPoint = mPeriodicIO.pointArray.get(yArr.length - 1);
-//
-//						double upperLineSlope = Math.abs((upperRightPoint.y() - upperLeftPoint.y()) / (upperRightPoint.x() - upperLeftPoint.x()));
-//						double lowerLineSlope = (lowerRightPoint.y() - lowerLeftPoint.y()) / (lowerRightPoint.x() - lowerLeftPoint.x());
-//						mPeriodicIO.calculatedSkewFactor.addNumber(Math.toDegrees(Math.atan((upperLineSlope + Math.abs(lowerLineSlope)) / 2.0)) * Math.signum(lowerLineSlope));
-//					} else {
-//						mPeriodicIO.calculatedSkewFactor.clear();
-//					}
-//				} catch (Exception ex) {
-//					ConsoleReporter.report(ex);
-//				}
-
-//				mPeriodicIO.targetDistance = mTargetMode == TargetMode.ROCKET_BALL ?
-//						(TargetingConstants.kRocketBallTargetHeight - TargetingConstants.kLimelightFrontMountedHeightToFloor) /
-//								Math.atan(TargetingConstants.kLimelightFrontMountedAngleWrtFloor + mPeriodicIO.targetVerticalDeviation) :
-//						(TargetingConstants.kHatchTargetHeight - TargetingConstants.kLimelightBackMountedHeightToFloor) /
-//								Math.atan(TargetingConstants.kLimelightBackMountedAngleWrtFloor + mPeriodicIO.targetVerticalDeviation);
+				mPeriodicIO.cameraTranslation = new CameraTranslation(mCurrentTargetingLimelightNT.getEntry("camtran").getDoubleArray(mPeriodicIO.cameraTranslationRotationDefaultArray));
+				mPeriodicIO.cameraToTargetPose = new Pose2d(new Translation2d(mPeriodicIO.cameraTranslation.x, mPeriodicIO.cameraTranslation.y), Rotation2d.fromDegrees(mPeriodicIO.cameraTranslation.yaw));
 			}
 			else {
 				mPeriodicIO.targetValid = 0;
@@ -205,9 +172,9 @@ public class VisionTracker extends Subsystem {
 				mPeriodicIO.targetHorizontalSide = 0;
 				mPeriodicIO.targetVerticalSide = 0;
 				mPeriodicIO.getPipelineValue = 0;
-				mPeriodicIO.cameraTranslationRotation = 0;
+				mPeriodicIO.cameraTranslation = CameraTranslation.identity;
+				mPeriodicIO.cameraToTargetPose = Pose2d.identity();
 				mPeriodicIO.targetDistance = 0;
-				mPeriodicIO.calculatedSkewFactor.clear();
 			}
 		}
 		catch (Exception ex) {
@@ -218,8 +185,7 @@ public class VisionTracker extends Subsystem {
 	@Override
 	public synchronized void writePeriodicOutputs() {
 		try {
-			limelightFrontNT.getEntry("pipeline").setNumber(mPeriodicIO.pipelineFront);
-			limelightBackNT.getEntry("pipeline").setNumber(mPeriodicIO.pipelineBack);
+			limelightTurret.getEntry("pipeline").setNumber(mPeriodicIO.pipelineFront);
 		}
 		catch (Exception ex) {
 			ConsoleReporter.report(ex);
@@ -235,6 +201,38 @@ public class VisionTracker extends Subsystem {
 
 	public TargetMode getTargetMode() {
 		return mTargetMode;
+	}
+
+	public static class CameraTranslation {
+		public final double x;
+		public final double y;
+		public final double z;
+		public final double pitch;
+		public final double yaw;
+		public final double roll;
+		public static final CameraTranslation identity = new CameraTranslation(new double[6]);
+		CameraTranslation(double[] inputData) {
+			if (inputData.length == 6) {
+				x = inputData[0];
+				y = inputData[1];
+				z = inputData[2];
+				pitch = inputData[3];
+				yaw = inputData[4];
+				roll = inputData[5];
+			} else {
+				x = 0;
+				y = 0;
+				z = 0;
+				pitch = 0;
+				yaw = 0;
+				roll = 0;
+			}
+		}
+
+		@Override
+		public String toString() {
+			return "(x: " + x + ", y: " + y + ", theta: " + yaw + ")";
+		}
 	}
 
 	@SuppressWarnings("WeakerAccess")
@@ -253,21 +251,18 @@ public class VisionTracker extends Subsystem {
 		double targetVerticalSide;
 		double targetDistance;
 		double getPipelineValue;
-		double cameraTranslationRotation;
-		public MovingAverage calculatedSkewFactor = new MovingAverage(10);
+		public Pose2d cameraToTargetPose;
+		public CameraTranslation cameraTranslation;
+		double[] cameraTranslationRotationDefaultArray = new double[6];
 
 		ArrayList<Translation2d> pointArray = new ArrayList<>();
 
 		//Written values
 		int pipelineFront;
-		int pipelineBack;
 		public double vision_loop_time;
 	}
 
 	public enum TargetMode {
-		HATCH,
-		CARGO_BALL,
-		ROCKET_BALL,
-		HATCH_AUTOSKEW;
+		AUTO_TARGET;
 	}
 }
