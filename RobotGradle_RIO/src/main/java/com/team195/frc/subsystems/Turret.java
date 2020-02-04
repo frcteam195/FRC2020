@@ -169,7 +169,7 @@ public class Turret extends Subsystem implements InterferenceSystem {
 						Translation2d turretToTarget = latestFieldToTarget.getTranslation().translateBy(latestFieldToTurret.getTranslation().inverse());
 						Rotation2d robotCentricSetpoint = turretToTarget.direction().rotateBy(robotPose.getRotation().inverse());
 						double rawDegreesOut = calculateSetpointForRobotCentricRotation(convertRotationsToTurretDegrees(mPeriodicIO.turret_position), robotCentricSetpoint, CalConstants.kTurretMinDegrees, CalConstants.kTurretMinDegrees);
-						double arbFF = 0;
+						double arbFF = -mTurretRotationMotor.getArbFFFromVelocity(????,Drive.getInstance().getAngularVelocity(), mPeriodicIO.turret_loop_time);
 						mTurretRotationMotor.set(MCControlMode.MotionMagic, convertTurretDegreesToRotations(rawDegreesOut), 0, arbFF);
 
 						break;

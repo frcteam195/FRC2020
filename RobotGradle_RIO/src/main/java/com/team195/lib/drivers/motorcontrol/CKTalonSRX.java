@@ -54,6 +54,8 @@ public class CKTalonSRX implements TuneableMotorController {
 
 	private double speedNew = 0;
 
+	private double mGearRatioToOutputMechanism = 1;
+
 	private CKTalonSRX(int deviceId, PDPBreaker breakerCurrent, Configuration deviceConfig) {
 		initializeFeedbackList();
 		mTalonSRX = new TalonSRX(deviceId);
@@ -600,6 +602,16 @@ public class CKTalonSRX implements TuneableMotorController {
 	@Override
 	public double getVelocity() {
 		return convertNativeUnitsToRPM(mTalonSRX.getSelectedSensorVelocity());
+	}
+
+	@Override
+	public double getGearRatioToOutputMechanism() {
+		return mGearRatioToOutputMechanism;
+	}
+
+	@Override
+	public synchronized void setGearRatioToOutputMechanism(double gearRatioToOutputMechanism) {
+		mGearRatioToOutputMechanism = gearRatioToOutputMechanism;
 	}
 
 	@Override

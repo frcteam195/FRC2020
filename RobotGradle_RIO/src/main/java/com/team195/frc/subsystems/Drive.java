@@ -333,6 +333,7 @@ public class Drive extends Subsystem {
 		return (getLeftLinearVelocity() + getRightLinearVelocity()) / 2.0;
 	}
 
+	//Rad/s
 	public double getAngularVelocity() {
 		return (getRightLinearVelocity() - getLeftLinearVelocity()) / CalConstants.kDriveWheelTrackWidthInches;
 	}
