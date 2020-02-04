@@ -49,6 +49,7 @@ public class Drive extends Subsystem {
 	private AtomicBoolean mIsBrakeMode = new AtomicBoolean(false);
 	private AtomicBoolean mForceBrakeUpdate = new AtomicBoolean(false);
 	private boolean mPrevBrakeMode;
+	private double mMaxAccel = 200; //Units in inches / sec^2
 
 	private final CachedValue<Boolean> mGyroPresent;
 
@@ -433,9 +434,22 @@ public class Drive extends Subsystem {
 		}
 	}
 
+	private double getFilteredVelocity(double requestedVelocity, double currentVelocity) {
+		double diffErr = requestedVelocity - currentVelocity;
+
+		if (mMaxAccel == 0)
+			return requestedVelocity;
+
+		double speedNew = currentVelocity + (mMaxAccel * mPeriodicIO.drive_loop_time * Math.copySign(1.0, diffErr));
+		return Math.abs(speedNew) > Math.abs(requestedVelocity) ? requestedVelocity : speedNew;
+	}
+
 	@Override
 	public synchronized void writePeriodicOutputs() {
-		if (mDriveControlState == DriveControlState.OPEN_LOOP
+		if (mDriveControlState == DriveControlState.VELOCITY) {
+			mLeftMaster.set(MCControlMode.Velocity, getFilteredVelocity(mPeriodicIO.left_demand, mPeriodicIO.left_velocity_RPM), 0, 0.0);
+			mRightMaster.set(MCControlMode.Velocity, getFilteredVelocity(mPeriodicIO.right_demand, mPeriodicIO.right_velocity_RPM), 0, 0.0);
+		} else if (mDriveControlState == DriveControlState.OPEN_LOOP
 				|| mDriveControlState == DriveControlState.CLIMB
 				|| mDriveControlState == DriveControlState.OPEN_LOOP_AUTOMATED) {
 			mLeftMaster.set(MCControlMode.PercentOut, mPeriodicIO.left_demand, 0, 0.0);
@@ -551,6 +565,10 @@ public class Drive extends Subsystem {
 		}
 		else
 			return true;
+	}
+
+	public synchronized void setMaxAccel (double maxAccelIPS) {
+		mMaxAccel = maxAccelIPS;
 	}
 
 	public void forceBrakeModeUpdate() {
