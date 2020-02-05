@@ -74,18 +74,18 @@ public class HIDController {
 					if (!USE_CHEESY_DRIVE) {
 						mThrottle = -driveJoystick.getSmoothedAxis(1, Constants.kJoystickDeadband, 2);
 						mTurn = driveJoystick.getNormalizedAxis(4, Constants.kJoystickDeadband) * 0.5;
-						if (VisionTracker.getInstance().isVisionEnabled() && VisionTracker.getInstance().getTargetMode() == VisionTracker.TargetMode.HATCH) {
-							if (Turret.getInstance().getSetpoint() == TurretPositions.Right90) {
-								if (VisionTracker.getInstance().isTargetFound())
-									mThrottle = -Math.max(Math.min(VisionTracker.getInstance().getTargetHorizAngleDev() * 0.01, 1), -1);
-							} else if (Turret.getInstance().getSetpoint() == TurretPositions.Left90) {
-								if (VisionTracker.getInstance().isTargetFound())
-									mThrottle = Math.max(Math.min(VisionTracker.getInstance().getTargetHorizAngleDev() * 0.01, 1), -1);
-							} else {
-								if (VisionTracker.getInstance().isTargetFound())
-									mTurn = Math.max(Math.min(VisionTracker.getInstance().getTargetHorizAngleDev() * 0.007, 1), -1);
-							}
-						}
+//						if (VisionTracker.getInstance().isVisionEnabled() && VisionTracker.getInstance().getTargetMode() == VisionTracker.TargetMode.HATCH) {
+//							if (Turret.getInstance().getSetpoint() == TurretPositions.Right90) {
+//								if (VisionTracker.getInstance().isTargetFound())
+//									mThrottle = -Math.max(Math.min(VisionTracker.getInstance().getTargetHorizAngleDev() * 0.01, 1), -1);
+//							} else if (Turret.getInstance().getSetpoint() == TurretPositions.Left90) {
+//								if (VisionTracker.getInstance().isTargetFound())
+//									mThrottle = Math.max(Math.min(VisionTracker.getInstance().getTargetHorizAngleDev() * 0.01, 1), -1);
+//							} else {
+//								if (VisionTracker.getInstance().isTargetFound())
+//									mTurn = Math.max(Math.min(VisionTracker.getInstance().getTargetHorizAngleDev() * 0.007, 1), -1);
+//							}
+//						}
 
 
 						if (mDrive.getDriveControlState() == Drive.DriveControlState.OPEN_LOOP) {
@@ -97,18 +97,18 @@ public class HIDController {
 						mThrottle = -driveJoystick.getNormalizedAxis(1, Constants.kJoystickDeadband);
 						mTurn = driveJoystick.getNormalizedAxis(4, Constants.kJoystickDeadband) * 0.6;
 
-						if (VisionTracker.getInstance().isVisionEnabled() && VisionTracker.getInstance().getTargetMode() == VisionTracker.TargetMode.HATCH) {
-							if (Turret.getInstance().getSetpoint() == TurretPositions.Right90) {
-								if (VisionTracker.getInstance().isTargetFound())
-									mThrottle = -Math.max(Math.min(VisionTracker.getInstance().getTargetHorizAngleDev() * 0.01, 1), -1);
-							} else if (Turret.getInstance().getSetpoint() == TurretPositions.Left90) {
-								if (VisionTracker.getInstance().isTargetFound())
-									mThrottle = Math.max(Math.min(VisionTracker.getInstance().getTargetHorizAngleDev() * 0.01, 1), -1);
-							} else {
-								if (VisionTracker.getInstance().isTargetFound())
-									mTurn = Math.max(Math.min(VisionTracker.getInstance().getTargetHorizAngleDev() * 0.01, 0.1), -0.1);
-							}
-						}
+//						if (VisionTracker.getInstance().isVisionEnabled() && VisionTracker.getInstance().getTargetMode() == VisionTracker.TargetMode.HATCH) {
+//							if (Turret.getInstance().getSetpoint() == TurretPositions.Right90) {
+//								if (VisionTracker.getInstance().isTargetFound())
+//									mThrottle = -Math.max(Math.min(VisionTracker.getInstance().getTargetHorizAngleDev() * 0.01, 1), -1);
+//							} else if (Turret.getInstance().getSetpoint() == TurretPositions.Left90) {
+//								if (VisionTracker.getInstance().isTargetFound())
+//									mThrottle = Math.max(Math.min(VisionTracker.getInstance().getTargetHorizAngleDev() * 0.01, 1), -1);
+//							} else {
+//								if (VisionTracker.getInstance().isTargetFound())
+//									mTurn = Math.max(Math.min(VisionTracker.getInstance().getTargetHorizAngleDev() * 0.01, 0.1), -0.1);
+//							}
+//						}
 
 						if (mDrive.getDriveControlState() == Drive.DriveControlState.OPEN_LOOP) {
 							boolean brake = driveJoystick.getRawButton(5) || driveJoystick.getRawButton(6) || VisionTracker.getInstance().isVisionEnabled();
@@ -129,17 +129,17 @@ public class HIDController {
 					}
 
 					if (driveJoystick.getRawButton(1)) {
-						VisionTracker.getInstance().setTargetMode(VisionTracker.TargetMode.HATCH);
-						if (!VisionTracker.getInstance().isTargetAreaReached())
-							VisionTracker.getInstance().setVisionEnabled(true);
-						else
-							VisionTracker.getInstance().setVisionEnabled(false);
+//						VisionTracker.getInstance().setTargetMode(VisionTracker.TargetMode.HATCH);
+//						if (!VisionTracker.getInstance().isTargetAreaReached())
+//							VisionTracker.getInstance().setVisionEnabled(true);
+//						else
+//							VisionTracker.getInstance().setVisionEnabled(false);
 					} else if (driveJoystick.getRawButton(2)) {
-						VisionTracker.getInstance().setTargetMode(VisionTracker.TargetMode.HATCH);
-						VisionTracker.getInstance().setVisionEnabled(true);
+//						VisionTracker.getInstance().setTargetMode(VisionTracker.TargetMode.HATCH);
+//						VisionTracker.getInstance().setVisionEnabled(true);
 					} else {
-						if (VisionTracker.getInstance().getTargetMode() == VisionTracker.TargetMode.HATCH)
-							VisionTracker.getInstance().setVisionEnabled(false);
+//						if (VisionTracker.getInstance().getTargetMode() == VisionTracker.TargetMode.HATCH)
+//							VisionTracker.getInstance().setVisionEnabled(false);
 					}
 
 					if (driveJoystick.getRisingEdgeTrigger(2, Constants.kJoystickTriggerThreshold)) {
