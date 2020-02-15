@@ -167,7 +167,8 @@ public class Turret extends Subsystem implements InterferenceSystem {
 //						Translation2d latestFieldToTarget = new Translation2d(-10, -120); //Create this from Camera Data
 						Pose2d robotPose = RobotState.getInstance().getLatestFieldToVehicle().getValue();
 						Pose2d latestFieldToTurret = RobotState.getInstance().getLatestFieldToTurretPose(convertRotationsToTurretDegrees(mPeriodicIO.turret_position));
-						Translation2d latestFieldToTarget = latestFieldToTurret.transformBy(CalConstants.kTurretToCamera).transformBy(VisionTracker.getInstance().getCameraToTargetPose()).getTranslation();
+						Translation2d latestFieldToTarget = new Translation2d(-8, 67); //Inner
+                        Translation2d latestFieldToTargetO = new Translation2d(0, 67); //Outer
 						Translation2d turretToTarget = latestFieldToTarget.getTranslation().translateBy(latestFieldToTurret.getTranslation().inverse());
 						Rotation2d robotCentricSetpoint = turretToTarget.direction().rotateBy(robotPose.getRotation().inverse());
 						double rawDegreesOut = calculateSetpointForRobotCentricRotation(convertRotationsToTurretDegrees(mPeriodicIO.turret_position), robotCentricSetpoint, CalConstants.kTurretMinDegrees, CalConstants.kTurretMinDegrees);
