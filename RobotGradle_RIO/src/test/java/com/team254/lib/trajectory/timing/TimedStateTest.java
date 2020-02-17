@@ -3,9 +3,9 @@ package com.team254.lib.trajectory.timing;
 import com.team254.lib.geometry.Pose2d;
 import com.team254.lib.geometry.Translation2d;
 import com.team254.lib.util.Util;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 public class TimedStateTest {
     public static final double kTestEpsilon = Util.kEpsilon;

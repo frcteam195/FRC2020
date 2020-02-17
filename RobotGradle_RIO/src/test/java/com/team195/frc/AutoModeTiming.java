@@ -1,14 +1,14 @@
 package com.team195.frc;
 
 import com.team195.frc.paths.TrajectoryGenerator;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 public class AutoModeTiming {
     TrajectoryGenerator mTrajectoryGenerator = TrajectoryGenerator.getInstance();
     boolean mStartedLeft = true;
 
     @Test
-    void checkTiming() {
+    public void checkTiming() {
         mTrajectoryGenerator.generateTrajectories();
 
         double rocketHatchDuration = mTrajectoryGenerator.getTrajectorySet().lowStartToCloseRocketFarHatch.get(mStartedLeft).getLastState().t() +

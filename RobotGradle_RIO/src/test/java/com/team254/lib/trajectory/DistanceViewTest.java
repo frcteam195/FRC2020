@@ -2,12 +2,12 @@ package com.team254.lib.trajectory;
 
 import com.team254.lib.geometry.Translation2d;
 import com.team254.lib.util.Util;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 public class DistanceViewTest {
     public static final double kTestEpsilon = Util.kEpsilon;

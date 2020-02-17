@@ -2,6 +2,7 @@ package com.team195.frc.auto.actions;
 
 import com.team195.frc.constants.CalConstants;
 import com.team195.frc.subsystems.Turret;
+import com.team195.lib.util.TurretHelper;
 
 import java.util.function.Function;
 
@@ -14,8 +15,8 @@ public class SetTurretPositionJoystickAction implements Action {
 	private double mRotationAcc = 0;
 
 	private static final double kJoystickStep = 1.5;
-	private static final double kMaxForwardDeg = Turret.convertRotationsToTurretDegrees(CalConstants.kTurretForwardSoftLimit);
-	private static final double kMaxReverseDeg = Turret.convertRotationsToTurretDegrees(CalConstants.kTurretReverseSoftLimit);
+	private static final double kMaxForwardDeg = TurretHelper.convertRotationsToTurretDegrees(CalConstants.kTurretForwardSoftLimit);
+	private static final double kMaxReverseDeg = TurretHelper.convertRotationsToTurretDegrees(CalConstants.kTurretReverseSoftLimit);
 
 	public SetTurretPositionJoystickAction(Function<Void, Boolean> buttonGetterMethod, Function<Void, Double> axisGetterMethod) {
 		mButtonGetterMethod = buttonGetterMethod;
@@ -31,7 +32,7 @@ public class SetTurretPositionJoystickAction implements Action {
 	public void update() {
 		mRotationAcc += -mAxisGetterMethod.apply(null) * kJoystickStep;
 		mRotationAcc = Math.max(Math.min(mRotationAcc, kMaxForwardDeg), kMaxReverseDeg);
-		mTurret.setTurretPosition(Turret.convertTurretDegreesToRotations(mRotationAcc));
+		mTurret.setTurretPosition(TurretHelper.convertTurretDegreesToRotations(mRotationAcc));
 	}
 
 	@Override
@@ -41,6 +42,6 @@ public class SetTurretPositionJoystickAction implements Action {
 
 	@Override
 	public void start() {
-		mRotationAcc = Turret.convertRotationsToTurretDegrees(mTurret.getSetpoint());
+		mRotationAcc = TurretHelper.convertRotationsToTurretDegrees(mTurret.getSetpoint());
 	}
 }

@@ -1,9 +1,9 @@
 package com.team254.lib.geometry;
 
 import com.team254.lib.util.Util;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.*;
 
 public class TestSE2Math {
     public static final double kTestEpsilon = Util.kEpsilon;

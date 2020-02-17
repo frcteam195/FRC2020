@@ -9,7 +9,7 @@ import com.team254.lib.geometry.Twist2d;
 import com.team254.lib.trajectory.TimedView;
 import com.team254.lib.trajectory.TrajectoryIterator;
 import com.team254.lib.trajectory.timing.CentripetalAccelerationConstraint;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.util.Arrays;
 

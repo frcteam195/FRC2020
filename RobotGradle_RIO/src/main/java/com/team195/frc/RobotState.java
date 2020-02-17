@@ -21,8 +21,6 @@ public class RobotState {
 
 	private static final int kObservationBufferSize = 100;
 
-	private static final Translation2d kVehicleToTurret = CalConstants.kVehicleToTurret;
-
 	// FPGATimestamp -> Pose2d or Rotation2d
 	private final InterpolatingTreeMap<InterpolatingDouble, Pose2d> field_to_vehicle_ = new InterpolatingTreeMap<>(kObservationBufferSize);
 	private Twist2d vehicle_velocity_predicted_;
@@ -68,11 +66,11 @@ public class RobotState {
 	}
 
 	public Pose2d getFieldToTurret(double timestamp, double currentTurretRotationDegrees) {
-		return getFieldToVehicle(timestamp).transformBy(new Pose2d(kVehicleToTurret, Rotation2d.fromDegrees(currentTurretRotationDegrees)));
+		return getFieldToVehicle(timestamp).transformBy(new Pose2d(CalConstants.kVehicleToTurret.getTranslation(), Rotation2d.fromDegrees(currentTurretRotationDegrees)));
 	}
 
 	public Pose2d getLatestFieldToTurretPose(double currentTurretRotationDegrees) {
-		return field_to_vehicle_.lastEntry().getValue().transformBy(new Pose2d(kVehicleToTurret, Rotation2d.fromDegrees(currentTurretRotationDegrees)));
+		return field_to_vehicle_.lastEntry().getValue().transformBy(new Pose2d(CalConstants.kVehicleToTurret.getTranslation(), Rotation2d.fromDegrees(currentTurretRotationDegrees)));
 	}
 
 

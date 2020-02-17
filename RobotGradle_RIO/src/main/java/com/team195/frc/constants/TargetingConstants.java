@@ -1,13 +1,10 @@
 package com.team195.frc.constants;
 
+import com.team254.lib.geometry.Pose2d;
+import com.team254.lib.geometry.Rotation2d;
+import com.team254.lib.geometry.Translation2d;
+
 public class TargetingConstants {
-	public static final double kRocketBallTargetHeight = 0.0;
-	public static final double kHatchTargetHeight = 0.0;
-	public static final double kLimelightFrontMountedHeightToFloor = 0.0;
-	public static final double kLimelightFrontMountedAngleWrtFloor = 0.0;
-	public static final double kLimelightBackMountedHeightToFloor = 0.0;
-	public static final double kLimelightBackMountedAngleWrtFloor = 0.0;
-	public static final double kVisionOffThreshold = 35;
-//	public static final double kVisionOffThreshold = 25.2;
-//	public static final double kVisionOffThreshold = 9.7;
+	public static final Translation2d fieldToInnerTarget = new Translation2d(-8, 67); //Inner
+	public static final Pose2d fieldToOuterTarget = new Pose2d(0, 67, Rotation2d.identity()); //Outer
 }

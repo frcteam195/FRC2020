@@ -1,5 +1,7 @@
 package com.team195.frc.subsystems;
 
+import com.team195.frc.RobotState;
+import com.team195.frc.constants.CalConstants;
 import com.team195.frc.constants.TargetingConstants;
 import com.team195.frc.loops.ILooper;
 import com.team195.frc.loops.Loop;
@@ -9,9 +11,9 @@ import com.team195.lib.util.ElapsedTimer;
 import com.team254.lib.geometry.Pose2d;
 import com.team254.lib.geometry.Rotation2d;
 import com.team254.lib.geometry.Translation2d;
-import com.team254.lib.util.MovingAverage;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.Timer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -106,8 +108,6 @@ public class VisionTracker extends Subsystem {
 		return mVisionEnabled && mPeriodicIO.targetValid > 0;
 	}
 
-	public boolean isTargetAreaReached() { return mPeriodicIO.targetArea >= TargetingConstants.kVisionOffThreshold; }
-
 	public double getTargetDistance() {
 		return mVisionEnabled ? mPeriodicIO.targetDistance : 0;
 	}
@@ -159,6 +159,16 @@ public class VisionTracker extends Subsystem {
 				mPeriodicIO.getPipelineValue = mCurrentTargetingLimelightNT.getEntry("getpipe").getDouble(0);
 				mPeriodicIO.cameraTranslation = new CameraTranslation(mCurrentTargetingLimelightNT.getEntry("camtran").getDoubleArray(mPeriodicIO.cameraTranslationRotationDefaultArray));
 				mPeriodicIO.cameraToTargetPose = new Pose2d(new Translation2d(mPeriodicIO.cameraTranslation.x, mPeriodicIO.cameraTranslation.y), Rotation2d.fromDegrees(mPeriodicIO.cameraTranslation.yaw));
+				if (!mPeriodicIO.cameraToTargetPose.equals(mPeriodicIO.prevCameraToTargetPose)) {
+					Pose2d targetToCamera = mPeriodicIO.cameraToTargetPose.inverse();
+					Pose2d cameraToTurret = CalConstants.kTurretToCamera.inverse();
+					Pose2d targetToTurret = targetToCamera.transformBy(cameraToTurret);
+					Pose2d turretToVehicle = CalConstants.kVehicleToTurret.inverse();
+					Pose2d targetToVehicle = targetToTurret.transformBy(turretToVehicle);
+					Pose2d fieldToVehicle = TargetingConstants.fieldToOuterTarget.transformBy(targetToVehicle);
+					RobotState.getInstance().addFieldToVehicleObservation(Timer.getFPGATimestamp(), fieldToVehicle);
+					mPeriodicIO.prevCameraToTargetPose = mPeriodicIO.cameraToTargetPose;
+				}
 			}
 			else {
 				mPeriodicIO.targetValid = 0;
@@ -252,6 +262,7 @@ public class VisionTracker extends Subsystem {
 		double targetDistance;
 		double getPipelineValue;
 		public Pose2d cameraToTargetPose;
+		public Pose2d prevCameraToTargetPose;
 		public CameraTranslation cameraTranslation;
 		double[] cameraTranslationRotationDefaultArray = new double[6];
 

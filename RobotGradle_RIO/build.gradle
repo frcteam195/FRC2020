@@ -117,9 +117,9 @@ dependencies {
 
     compile 'gov.nist.math:jama:1.0.3'
 	compile 'com.team195:CKIllposedOSCLib:0.0.1'
-	def jUnitVersion = '5.6.0-M1'
-    testCompile("org.junit.jupiter:junit-jupiter-api:${jUnitVersion}")
-    testRuntime("org.junit.jupiter:junit-jupiter-engine:${jUnitVersion}")
+//	def jUnitVersion = '5.6.0-M1'
+//    testCompile("org.junit.jupiter:junit-jupiter-api:${jUnitVersion}")
+//    testRuntime("org.junit.jupiter:junit-jupiter-engine:${jUnitVersion}")
 
     implementation wpi.deps.vendor.java()
     nativeZip wpi.deps.vendor.jni(wpi.platforms.roborio)

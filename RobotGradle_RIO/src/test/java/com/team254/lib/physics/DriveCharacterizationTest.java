@@ -1,11 +1,11 @@
 package com.team254.lib.physics;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 public class DriveCharacterizationTest {
     public static final double kTestEpsilon = 1e-4;

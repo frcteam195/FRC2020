@@ -2,11 +2,11 @@ package com.team254.lib.spline;
 
 import com.team254.lib.geometry.*;
 import com.team254.lib.util.Util;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 public class SplineGeneratorTest {
     public static final double kTestEpsilon = Util.kEpsilon;

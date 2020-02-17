@@ -1,6 +1,7 @@
 package com.team195.frc.constants;
 
 import com.team195.frc.subsystems.Turret;
+import com.team195.lib.util.TurretHelper;
 import com.team254.lib.geometry.Pose2d;
 import com.team254.lib.geometry.Rotation2d;
 import com.team254.lib.geometry.Translation2d;
@@ -106,15 +107,15 @@ public class CalConstants {
 	//Units in rotations
 	public static final double kTurretMinDegrees = 270;
 	public static final double kTurretMaxDegrees = -kTurretMinDegrees;
-	public static final double kTurretForwardSoftLimit = Turret.convertTurretDegreesToRotations(kTurretMinDegrees);
-	public static final double kTurretReverseSoftLimit = Turret.convertTurretDegreesToRotations(kTurretMaxDegrees);
+	public static final double kTurretForwardSoftLimit = TurretHelper.convertTurretDegreesToRotations(kTurretMinDegrees);
+	public static final double kTurretReverseSoftLimit = TurretHelper.convertTurretDegreesToRotations(kTurretMaxDegrees);
 	public static final double kTurretSmallGearTeeth = 18;
 	public static final double kTurretLargeGearTeeth = 124;
 
 	// TODO measure in CAD/on robot!
-	public static final Translation2d kVehicleToTurret = new Translation2d(0, 0); //Pose of turret w.r.t. robot
+	public static final Pose2d kVehicleToTurret = new Pose2d(10, 10, Rotation2d.identity()); //Pose of turret w.r.t. robot
 	// TODO measure in CAD/on robot!
-	public static final Pose2d kTurretToCamera = new Pose2d(new Translation2d(0, 0), Rotation2d.fromDegrees(0)); //Pose of camera w.r.t. turret
+	public static final Pose2d kTurretToCamera = new Pose2d(0, 0, Rotation2d.fromDegrees(0)); //Pose of camera w.r.t. turret
 	///////////////////////////////////////////////////////////////////////////
 
 	//Breaker model for trip time output in seconds y = a*(current_percent_over_rating)^b + c
