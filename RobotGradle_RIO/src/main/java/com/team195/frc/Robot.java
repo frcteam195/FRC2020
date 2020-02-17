@@ -57,10 +57,10 @@ public class Robot extends TimedRobot {
 
 			mSubsystemManager = SubsystemManager.getInstance(
 					RobotStateEstimator.getInstance(),
+					VisionTracker.getInstance(),
 					Drive.getInstance(),
 					Turret.getInstance(),
-					Infrastructure.getInstance(),
-					VisionTracker.getInstance()
+					Infrastructure.getInstance()
 			);
 
 			ConsoleReporter.getInstance();

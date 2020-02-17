@@ -160,13 +160,19 @@ public class VisionTracker extends Subsystem {
 				mPeriodicIO.cameraTranslation = new CameraTranslation(mCurrentTargetingLimelightNT.getEntry("camtran").getDoubleArray(mPeriodicIO.cameraTranslationRotationDefaultArray));
 				mPeriodicIO.cameraToTargetPose = new Pose2d(new Translation2d(mPeriodicIO.cameraTranslation.x, mPeriodicIO.cameraTranslation.y), Rotation2d.fromDegrees(mPeriodicIO.cameraTranslation.yaw));
 				if (!mPeriodicIO.cameraToTargetPose.equals(mPeriodicIO.prevCameraToTargetPose)) {
-					Pose2d targetToCamera = mPeriodicIO.cameraToTargetPose.inverse();
-					Pose2d cameraToTurret = CalConstants.kTurretToCamera.inverse();
-					Pose2d targetToTurret = targetToCamera.transformBy(cameraToTurret);
-					Pose2d turretToVehicle = CalConstants.kVehicleToTurret.inverse();
-					Pose2d targetToVehicle = targetToTurret.transformBy(turretToVehicle);
-					Pose2d fieldToVehicle = TargetingConstants.fieldToOuterTarget.transformBy(targetToVehicle);
-					RobotState.getInstance().addFieldToVehicleObservation(Timer.getFPGATimestamp(), fieldToVehicle);
+//					Pose2d targetToCamera = mPeriodicIO.cameraToTargetPose.inverse();
+//					Pose2d cameraToTurret = CalConstants.kTurretToCamera.inverse();
+//					Pose2d targetToTurret = targetToCamera.transformBy(cameraToTurret);
+//					Pose2d turretToVehicle = CalConstants.kVehicleToTurret.inverse();
+//					Pose2d targetToVehicle = targetToTurret.transformBy(turretToVehicle);
+//					Pose2d fieldToVehicle = TargetingConstants.fieldToOuterTarget.transformBy(targetToVehicle);
+//					RobotState.getInstance().addFieldToVehicleObservation(Timer.getFPGATimestamp(), fieldToVehicle);
+					Pose2d latestAbsoluteFieldToVehicle = TargetingConstants.fieldToOuterTarget.transformBy(
+							mPeriodicIO.cameraToTargetPose.inverse()    //May want to use robot angle here instead of angle from Camera pose
+							.transformBy(CalConstants.kTurretToCamera.inverse())
+							.transformBy(CalConstants.kVehicleToTurret.inverse())
+					);
+					RobotState.getInstance().addFieldToVehicleObservation(Timer.getFPGATimestamp(), latestAbsoluteFieldToVehicle);
 					mPeriodicIO.prevCameraToTargetPose = mPeriodicIO.cameraToTargetPose;
 				}
 			}

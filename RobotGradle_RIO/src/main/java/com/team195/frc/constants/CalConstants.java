@@ -115,7 +115,7 @@ public class CalConstants {
 	// TODO measure in CAD/on robot!
 	public static final Pose2d kVehicleToTurret = new Pose2d(10, 10, Rotation2d.identity()); //Pose of turret w.r.t. robot
 	// TODO measure in CAD/on robot!
-	public static final Pose2d kTurretToCamera = new Pose2d(0, 0, Rotation2d.fromDegrees(0)); //Pose of camera w.r.t. turret
+	public static final Pose2d kTurretToCamera = new Pose2d(0, 0, Rotation2d.identity()); //Pose of camera w.r.t. turret
 	///////////////////////////////////////////////////////////////////////////
 
 	//Breaker model for trip time output in seconds y = a*(current_percent_over_rating)^b + c
