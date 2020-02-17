@@ -112,10 +112,10 @@ public class CalConstants {
 	public static final double kTurretSmallGearTeeth = 18;
 	public static final double kTurretLargeGearTeeth = 124;
 
-	// TODO measure in CAD/on robot!
-	public static final Pose2d kVehicleToTurret = new Pose2d(10, 10, Rotation2d.identity()); //Pose of turret w.r.t. robot
-	// TODO measure in CAD/on robot!
-	public static final Pose2d kTurretToCamera = new Pose2d(0, 0, Rotation2d.identity()); //Pose of camera w.r.t. turret
+	// TODO measure on robot!
+	public static final Pose2d kVehicleToTurret = new Pose2d(0.42, -1.75, Rotation2d.identity()); //Pose of turret w.r.t. robot
+	// TODO measure on robot!
+	public static final Pose2d kTurretToCamera = new Pose2d(9.737, -0.25, Rotation2d.identity()); //Pose of camera w.r.t. turret
 	///////////////////////////////////////////////////////////////////////////
 
 	//Breaker model for trip time output in seconds y = a*(current_percent_over_rating)^b + c
