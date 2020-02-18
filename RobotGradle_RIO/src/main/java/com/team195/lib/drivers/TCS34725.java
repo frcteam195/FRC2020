@@ -5,9 +5,7 @@ import com.team195.lib.util.ThreadRateControl;
 import com.team195.lib.util.TimeoutTimer;
 import edu.wpi.first.wpilibj.*;
 
-import java.nio.ByteBuffer;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Driver for the TCS34725 RGB color sensor. Adapted for roboRio/WPILib
@@ -20,9 +18,10 @@ import java.util.Map;
  *
  * @author Improvements - Robert Hilton, Mentor, Team 195, 2020
  * Converted to synchronous, non-blocking code, except for init
+ * Remove ByteBuffer dynamic allocation
  */
 public class TCS34725 {
-	protected I2C i2c;
+	private I2C i2c;
 
 	public final static int TCS34725_COMMAND_BIT = 0x80;
 	public final static int TCS34725_COMMAND_AUTO_INCREMENT = 0x20;
@@ -87,7 +86,7 @@ public class TCS34725 {
 	public final static int TCS34725_GAIN_16X = 0x02;   //  16x gain
 	public final static int TCS34725_GAIN_60X = 0x03;   //  60x gain
 
-	public final static Map<Integer, Double> INTEGRATION_TIME_DELAY = new HashMap<>();
+	public final static HashMap<Integer, Double> INTEGRATION_TIME_DELAY = new HashMap<>();
 
 	static {
 		INTEGRATION_TIME_DELAY.put(TCS34725_INTEGRATIONTIME_2_4MS, 0.0024);   // 2.4ms - 1 cycle    - Max Count: 1024
@@ -98,14 +97,16 @@ public class TCS34725 {
 		INTEGRATION_TIME_DELAY.put(TCS34725_INTEGRATIONTIME_700MS, 0.700);   // 700ms - 256 cycles - Max Count: 65535
 	}
 
-	private boolean verbose = false;
 
 	public final static int INTEGRATION_TIME_DEFAULT = TCS34725_INTEGRATIONTIME_50MS;
 	public final static int GAIN_DEFAULT = TCS34725_GAIN_4X;
+	private boolean verbose = false;
+
 	private int integrationTime;
 	private int gain;
-	ThreadRateControl trc = new ThreadRateControl();
-	TimeoutTimer timeoutTimer = new TimeoutTimer(INTEGRATION_TIME_DELAY.get(INTEGRATION_TIME_DEFAULT));
+	private ThreadRateControl trc = new ThreadRateControl();
+	private TimeoutTimer timeoutTimer = new TimeoutTimer(INTEGRATION_TIME_DELAY.get(INTEGRATION_TIME_DEFAULT));
+	private byte[] readBuffer = new byte[2];
 
 	/**
 	 * Constructs the TCS34725 RGB color sensor over onboard I2C port.
@@ -368,12 +369,13 @@ public class TCS34725 {
 	 * @throws TransferAbortedException
 	 */
 	private int readU16(int register) throws TransferAbortedException {
-		ByteBuffer rawByte = ByteBuffer.allocate(2);
-		if (i2c.read(TCS34725_COMMAND_BIT | TCS34725_COMMAND_AUTO_INCREMENT | register, 2, rawByte) == true) {
+		readBuffer[0] = 0;
+		readBuffer[1] = 0;
+		if (i2c.read(TCS34725_COMMAND_BIT | TCS34725_COMMAND_AUTO_INCREMENT | register, 2, readBuffer) == true) {
 			throw new TransferAbortedException("Read aborted");
 		}
-		byte lo = rawByte.get();
-		byte hi = rawByte.get();
+		byte lo = readBuffer[0];
+		byte hi = readBuffer[1];
 
 		int result = ((hi & 0xFF) << 8) | (lo & 0xFF);
 		if (verbose) {
@@ -391,11 +393,12 @@ public class TCS34725 {
 	 */
 	private int readU8(int reg) throws TransferAbortedException {
 		int result = 0;
-		ByteBuffer rawByte = ByteBuffer.allocate(1);
-		if (i2c.read(TCS34725_COMMAND_BIT | reg, 1, rawByte) == true) {
+		readBuffer[0] = 0;
+		readBuffer[1] = 0;
+		if (i2c.read(TCS34725_COMMAND_BIT | reg, 1, readBuffer) == true) {
 			throw new TransferAbortedException("Read aborted");
 		}
-		result = rawByte.get() & 0xFF;
+		result = readBuffer[0] & 0xFF;
 		if (verbose) {
 			System.out.println("(U8) I2C: Device " + toHex(TCS34725_ADDRESS) + " returned " + toHex(result) + " from reg " + toHex(~TCS34725_COMMAND_BIT & reg));
 		}
