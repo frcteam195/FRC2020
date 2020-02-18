@@ -3,7 +3,9 @@ package com.team195.lib.drivers;
 import com.team195.lib.util.ColorOutput;
 import com.team195.lib.util.ThreadRateControl;
 import com.team195.lib.util.TimeoutTimer;
-import edu.wpi.first.wpilibj.*;
+import edu.wpi.first.hal.FRCNetComm;
+import edu.wpi.first.hal.HAL;
+import edu.wpi.first.wpilibj.I2C;
 
 import java.util.HashMap;
 
@@ -97,6 +99,7 @@ public class TCS34725 {
 		INTEGRATION_TIME_DELAY.put(TCS34725_INTEGRATIONTIME_700MS, 0.700);   // 700ms - 256 cycles - Max Count: 65535
 	}
 
+	public static final int kDeviceID = 0x44;
 
 	public final static int INTEGRATION_TIME_DEFAULT = TCS34725_INTEGRATIONTIME_50MS;
 	public final static int GAIN_DEFAULT = TCS34725_GAIN_4X;
@@ -161,7 +164,7 @@ public class TCS34725 {
 	 * @param verbose			If true, spew helpful messages to console. If omitted, assume false.
 	 */
 	public TCS34725(I2C i2c, int integrationTime, int gain, boolean... verbose) {
-		// TODO: HAL usage reporting?  Need constants to define resource.
+		HAL.report(FRCNetComm.tResourceType.kResourceType_I2C, kDeviceID, 0, "TCS34725_ColorSensor");
 		if (i2c == null) {
 			throw new IllegalArgumentException("i2c cannot be null");
 		}
@@ -192,14 +195,14 @@ public class TCS34725 {
 	 *
 	 * @throws Exception
 	 */
-	private void initialize(int integrationTime, int gain) throws TransferAbortedException, InterruptedException {
+	private void initialize(int integrationTime, int gain) throws TransferAbortedException {
 		trc.start();
 		timeoutTimer.reset();
 		if (gain > TCS34725_GAIN_60X | gain < 0) {
 			throw new IllegalArgumentException("Gain not valid.");
 		}
 		int result = this.readU8(TCS34725_ID);
-		if (result != 0x44) {
+		if (result != kDeviceID) {
 			throw new RuntimeException("Device is not a TCS34721/TCS34725");
 		}
 		// Set startup integration time and gain
@@ -216,13 +219,12 @@ public class TCS34725 {
 	/**
 	 * Enable color sensor sensing.
 	 *
-	 * @throws InterruptedException
 	 * @throws TransferAbortedException
 	 */
-	public void enable() throws TransferAbortedException, InterruptedException {
+	public void enable() throws TransferAbortedException {
 		this.write8(TCS34725_ENABLE, TCS34725_ENABLE_PON);
 		trc.start();
-		trc.doRateControl(10);															// Per datasheet, at least 2.4ms must elapse before AEN can be asserted
+		trc.doRateControl(10); // Per datasheet, at least 2.4ms must elapse before AEN can be asserted
 		this.write8(TCS34725_ENABLE, (TCS34725_ENABLE_PON | TCS34725_ENABLE_AEN));
 		timeoutTimer.reset();
 		if (verbose) {
@@ -236,7 +238,7 @@ public class TCS34725 {
 		return ((reg & TCS34725_ENABLE_PON) != 0 && (reg & TCS34725_ENABLE_AEN) != 0);
 	}
 
-	public void disable() throws TransferAbortedException, InterruptedException {
+	public void disable() throws TransferAbortedException {
 		// Datasheet does not say it explicitly, but you must wait the 2.4ms between
 		// turning off AEN and PON in order to get the device into the sleep state.
 		int reg = 0;
@@ -374,10 +376,8 @@ public class TCS34725 {
 		if (i2c.read(TCS34725_COMMAND_BIT | TCS34725_COMMAND_AUTO_INCREMENT | register, 2, readBuffer) == true) {
 			throw new TransferAbortedException("Read aborted");
 		}
-		byte lo = readBuffer[0];
-		byte hi = readBuffer[1];
 
-		int result = ((hi & 0xFF) << 8) | (lo & 0xFF);
+		int result = (readBuffer[1] << 8) | readBuffer[0];
 		if (verbose) {
 			System.out.println("(U16) I2C: Device " + toHex(TCS34725_ADDRESS) + " returned " + toHex(result) + " from reg " + toHex(~TCS34725_COMMAND_BIT & register));
 		}
@@ -398,7 +398,7 @@ public class TCS34725 {
 		if (i2c.read(TCS34725_COMMAND_BIT | reg, 1, readBuffer) == true) {
 			throw new TransferAbortedException("Read aborted");
 		}
-		result = readBuffer[0] & 0xFF;
+		result = readBuffer[0];
 		if (verbose) {
 			System.out.println("(U8) I2C: Device " + toHex(TCS34725_ADDRESS) + " returned " + toHex(result) + " from reg " + toHex(~TCS34725_COMMAND_BIT & reg));
 		}
@@ -430,7 +430,7 @@ public class TCS34725 {
 			this.b = b;
 			this.c = c;
 
-			RGBtoHSB(r,g,b,hsv);
+			RGBtoHSV(r,g,b,hsv);
 			h = (int)(hsv[0] * 360.0);
 			s = (int)(hsv[1] * 255.0);
 			v = (int)(hsv[2] * 255.0);
@@ -478,10 +478,10 @@ public class TCS34725 {
 					", c:" + c + "]";
 		}
 
-		public static float[] RGBtoHSB(int r, int g, int b, float[] hsbvals) {
+		public static float[] RGBtoHSV(int r, int g, int b, float[] hsvVals) {
 			float hue, saturation, brightness;
-			if (hsbvals == null) {
-				hsbvals = new float[3];
+			if (hsvVals == null) {
+				hsvVals = new float[3];
 			}
 			int cmax = (r > g) ? r : g;
 			if (b > cmax) cmax = b;
@@ -509,10 +509,10 @@ public class TCS34725 {
 				if (hue < 0)
 					hue = hue + 1.0f;
 			}
-			hsbvals[0] = hue;
-			hsbvals[1] = saturation;
-			hsbvals[2] = brightness;
-			return hsbvals;
+			hsvVals[0] = hue;
+			hsvVals[1] = saturation;
+			hsvVals[2] = brightness;
+			return hsvVals;
 		}
 	}
 }

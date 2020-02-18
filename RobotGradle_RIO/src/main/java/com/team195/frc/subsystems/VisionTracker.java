@@ -8,6 +8,7 @@ import com.team195.frc.loops.Loop;
 import com.team195.frc.reporters.ConsoleReporter;
 import com.team195.frc.reporters.ReflectingLogDataGenerator;
 import com.team195.lib.util.ElapsedTimer;
+import com.team195.lib.util.TurretHelper;
 import com.team254.lib.geometry.Pose2d;
 import com.team254.lib.geometry.Rotation2d;
 import com.team254.lib.geometry.Translation2d;
@@ -170,7 +171,7 @@ public class VisionTracker extends Subsystem {
 					Pose2d latestAbsoluteFieldToVehicle = TargetingConstants.fieldToOuterTarget.transformBy(
 							mPeriodicIO.cameraToTargetPose.inverse()    //May want to use robot angle here instead of angle from Camera pose
 							.transformBy(CalConstants.kTurretToCamera.inverse())
-							.transformBy(CalConstants.kVehicleToTurret.inverse())
+							.transformBy(Turret.getInstance().getLatestVehicleToTurretPose().inverse())
 					);
 					RobotState.getInstance().addFieldToVehicleObservation(Timer.getFPGATimestamp(), latestAbsoluteFieldToVehicle);
 					mPeriodicIO.prevCameraToTargetPose = mPeriodicIO.cameraToTargetPose;

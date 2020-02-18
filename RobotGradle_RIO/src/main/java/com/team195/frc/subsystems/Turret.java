@@ -165,7 +165,7 @@ public class Turret extends Subsystem implements InterferenceSystem {
 						Translation2d turretToTarget = TargetingConstants.fieldToOuterTarget.getTranslation().translateBy(latestFieldToTurret.getTranslation().inverse());
 						Rotation2d robotCentricSetpoint = turretToTarget.direction().rotateBy(robotPose.getRotation().inverse());
 						double rawDegreesOut = TurretHelper.calculateSetpointForRobotCentricRotation(TurretHelper.convertRotationsToTurretDegrees(mPeriodicIO.turret_position), robotCentricSetpoint, CalConstants.kTurretMinDegrees, CalConstants.kTurretMinDegrees);
-						double arbFF = -mTurretRotationMotor.getArbFFFromVelocity(-Drive.getInstance().getAngularVelocity() / (2 * Math.PI) * 60.0, mPeriodicIO.turret_velocity, mPeriodicIO.turret_loop_time);
+						double arbFF = 0;//-mTurretRotationMotor.getArbFFFromVelocity(-Drive.getInstance().getAngularVelocity() / (2 * Math.PI) * 60.0, mPeriodicIO.turret_velocity, mPeriodicIO.turret_loop_time);
 						mTurretRotationMotor.set(MCControlMode.MotionMagic, TurretHelper.convertTurretDegreesToRotations(rawDegreesOut), 0, arbFF);
 						break;
 					case OPEN_LOOP:
@@ -210,6 +210,11 @@ public class Turret extends Subsystem implements InterferenceSystem {
 	@Override
 	public double getSetpoint() {
 		return mPeriodicIO.turret_setpoint;
+	}
+
+	public Pose2d getLatestVehicleToTurretPose() {
+		return new Pose2d(CalConstants.kVehicleToTurret.getTranslation(),
+							Rotation2d.fromDegrees(TurretHelper.convertRotationsToTurretDegrees(Turret.getInstance().getPosition())));
 	}
 
 	public enum TurretControlMode {
