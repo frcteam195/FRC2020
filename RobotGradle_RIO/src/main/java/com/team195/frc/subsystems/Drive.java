@@ -14,6 +14,7 @@ import com.team195.lib.drivers.CKIMU;
 import com.team195.lib.drivers.NavX;
 import com.team195.lib.drivers.motorcontrol.*;
 import com.team195.lib.util.CachedValue;
+import com.team195.lib.util.DriveHelper;
 import com.team195.lib.util.ElapsedTimer;
 import com.team195.lib.util.MotorDiagnostics;
 import com.team254.lib.geometry.Pose2d;
@@ -50,6 +51,7 @@ public class Drive extends Subsystem {
 	private AtomicBoolean mForceBrakeUpdate = new AtomicBoolean(false);
 	private boolean mPrevBrakeMode;
 	private double mMaxAccel = 200; //Units in inches / sec^2
+	private double mMaxDecel= 200; //Units in inches / sec^2
 
 	private final CachedValue<Boolean> mGyroPresent;
 
@@ -436,13 +438,7 @@ public class Drive extends Subsystem {
 	}
 
 	private double getFilteredVelocity(double requestedVelocity, double currentVelocity) {
-		double diffErr = requestedVelocity - currentVelocity;
-
-		if (mMaxAccel == 0)
-			return requestedVelocity;
-
-		double speedNew = currentVelocity + (mMaxAccel * mPeriodicIO.drive_loop_time * Math.copySign(1.0, diffErr));
-		return Math.abs(speedNew) > Math.abs(requestedVelocity) ? requestedVelocity : speedNew;
+		return DriveHelper.velocityMaxAccelDecelFilter(requestedVelocity, currentVelocity, mMaxAccel, mMaxDecel, mPeriodicIO.drive_loop_time);
 	}
 
 	@Override
