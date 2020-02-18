@@ -1,5 +1,6 @@
 package com.team195.lib.drivers;
 
+import com.team195.lib.util.ColorOutput;
 import com.team195.lib.util.ThreadRateControl;
 import com.team195.lib.util.TimeoutTimer;
 import edu.wpi.first.wpilibj.*;
@@ -88,7 +89,7 @@ public class TCS34725 {
 
 	public final static Map<Integer, Double> INTEGRATION_TIME_DELAY = new HashMap<>();
 
-	static { //                                Microseconds
+	static {
 		INTEGRATION_TIME_DELAY.put(TCS34725_INTEGRATIONTIME_2_4MS, 0.0024);   // 2.4ms - 1 cycle    - Max Count: 1024
 		INTEGRATION_TIME_DELAY.put(TCS34725_INTEGRATIONTIME_24MS, 0.024);   // 24ms  - 10 cycles  - Max Count: 10240
 		INTEGRATION_TIME_DELAY.put(TCS34725_INTEGRATIONTIME_50MS, 0.050);   // 50ms  - 20 cycles  - Max Count: 20480
@@ -412,31 +413,6 @@ public class TCS34725 {
 	public static class TransferAbortedException extends Exception {
 		public TransferAbortedException(String message) {
 			super(message);
-		}
-	}
-
-	public static enum ColorOutput {
-		RED,
-		GREEN,
-		BLUE,
-		YELLOW,
-		NONE;
-
-		public static ColorOutput fromValue(int hue) {
-			if (hue >= 330 || hue <= 12) {
-				return RED;
-			}
-			else if (hue >= 65 && hue <= 160) {
-				return GREEN;
-			}
-			else if (hue >= 165 && hue <= 285) {
-				return BLUE;
-			}
-			else if (hue >= 20 && hue <= 55) {
-				return YELLOW;
-			}
-
-			return NONE;
 		}
 	}
 
