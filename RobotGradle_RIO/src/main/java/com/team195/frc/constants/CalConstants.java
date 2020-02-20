@@ -48,43 +48,24 @@ public class CalConstants {
 	public static final double kDriveLowGearVelocityKf = 0;//0.000176;
 	public static final double kDriveLowGearVelocityDFilter = 1;
 	public static final int kDriveLowGearVelocityIZone = 0;
-	public static final double kDriveVoltageRampRate = 0.1;
-
-	// PID gains for drive position loop (LOW GEAR)
-	// Units: setpoint, error, and output are in ticks per second.
-	public static final double kDriveLowGearPositionKp = 0.000090;
-	public static final double kDriveLowGearPositionKi = 0.0;
-	public static final double kDriveLowGearPositionKd = 0.001600;
-	public static final double kDriveLowGearPositionDFilter = 0.25;
-	public static final double kDriveLowGearPositionKf = 0.000162;
 	public static final double kDriveLowGearPositionCruiseVel = 2000;
 	public static final double kDriveLowGearPositionAccel = 1000;
-	public static final int kDriveLowGearPositoinIZone = 0;
 	public static final int kDriveLowGearCurrentLim = 50;
-	public static final int kDriveLeftClimbCurrentLim = 65;
-	public static final int kDriveRightClimbCurrentLim = 80;
-	public static final int kDriveLeftRetractCurrentLim = 50;
 	///////////////////////////////////////////////////////////////////////////
 
 	///////////////////////////////////////////////////////////////////////////
-	//Elevator
-	//17.25:1
-	public static final double kElevatorPositionKp = 1.9;
-	public static final double kElevatorPositionKi = 0.0;
-	public static final double kElevatorPositionKd = 8.0;
-	public static final double kElevatorPositionKf = 0.1380124477;
-	public static final int kElevatorPositionCruiseVel = 850;
-	public static final int kElevatorPositionMMAccel = 900;
-	public static final int kElevatorPositionSCurveStrength = 5;
-	public static final int kElevatorContinuousCurrentLimit = 15;
-	public static final int kElevatorPeakCurrentThreshold = 20;
-	public static final int kElevatorPeakCurrentThresholdExceedDuration = 0; //250;
-	//Units in rotations
-	public static final double kNewPulleyFactor = 1.25;
-	public static final double kElevatorPositionForwardSoftLimit = 6.3 * kNewPulleyFactor;
-	public static final double kElevatorPositionReverseSoftLimit = 0;
-	public static final double kElevatorLowSensitivityThreshold = 2.5;
-	public static final double kElevatorLowSensitivityFactor = 0.5;
+	//Color Panel Manipulator
+	//12:1 ??
+	public static final double kCPMPositionKp = 4.3;
+	public static final double kCPMPositionKi = 0.0;
+	public static final double kCPMPositionKd = 8.0;
+	public static final double kCPMPositionKf = 0.400360;
+	public static final int kCPMPositionCruiseVel = 350;
+	public static final int kCPMPositionMMAccel = 350;
+	public static final int kCPMPositionSCurveStrength = 5;
+	public static final int kCPMContinuousCurrentLimit = 20;
+	public static final int kCPMPeakCurrentThreshold = 0;
+	public static final int kCPMPeakCurrentThresholdExceedDuration = 0;
 	///////////////////////////////////////////////////////////////////////////
 
 	///////////////////////////////////////////////////////////////////////////
@@ -116,6 +97,10 @@ public class CalConstants {
 	public static final Pose2d kVehicleToTurret = new Pose2d(0.42, -1.75, Rotation2d.identity()); //Pose of turret w.r.t. robot
 	// TODO measure on robot!
 	public static final Pose2d kTurretToCamera = new Pose2d(9.737, -0.25, Rotation2d.identity()); //Pose of camera w.r.t. turret
+
+	public static final double kColorWheelDiameterInches = 32.0;
+	public static final double kColorWheelColorArcInches = 12.5;
+	public static final double kColorWheelManipulatorDiameter = 4.0;
 	///////////////////////////////////////////////////////////////////////////
 
 	//Breaker model for trip time output in seconds y = a*(current_percent_over_rating)^b + c

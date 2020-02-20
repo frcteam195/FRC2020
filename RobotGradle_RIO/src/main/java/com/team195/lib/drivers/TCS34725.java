@@ -377,7 +377,7 @@ public class TCS34725 {
 			throw new TransferAbortedException("Read aborted");
 		}
 
-		int result = (readBuffer[1] << 8) | readBuffer[0];
+		int result = ((readBuffer[1] & 0xFF) << 8) | (readBuffer[0] & 0xFF);
 		if (verbose) {
 			System.out.println("(U16) I2C: Device " + toHex(TCS34725_ADDRESS) + " returned " + toHex(result) + " from reg " + toHex(~TCS34725_COMMAND_BIT & register));
 		}
@@ -398,7 +398,7 @@ public class TCS34725 {
 		if (i2c.read(TCS34725_COMMAND_BIT | reg, 1, readBuffer) == true) {
 			throw new TransferAbortedException("Read aborted");
 		}
-		result = readBuffer[0];
+		result = readBuffer[0] & 0xFF;
 		if (verbose) {
 			System.out.println("(U8) I2C: Device " + toHex(TCS34725_ADDRESS) + " returned " + toHex(result) + " from reg " + toHex(~TCS34725_COMMAND_BIT & reg));
 		}
@@ -422,7 +422,9 @@ public class TCS34725 {
 	public static class TCSColor {
 		private int r, g, b, c;
 		private int h, s, v;
+		private double cCMYK, m, y, k;
 		float[] hsv = new float[3];
+		float[] cmyk = new float[4];
 
 		public TCSColor(int r, int g, int b, int c) {
 			this.r = r;
@@ -430,10 +432,19 @@ public class TCS34725 {
 			this.b = b;
 			this.c = c;
 
-			RGBtoHSV(r,g,b,hsv);
-			h = (int)(hsv[0] * 360.0);
-			s = (int)(hsv[1] * 255.0);
-			v = (int)(hsv[2] * 255.0);
+			//Disable HSV conversion
+			// RGBtoHSV(r,g,b,hsv);
+			// h = (int)(hsv[0] * 360.0);
+			// s = (int)(hsv[1] * 255.0);
+			// v = (int)(hsv[2] * 255.0);
+
+			//Not real CMYK, but works.
+			//TODO: Investigate using color profile for CMYK conversion
+			RGBtoCMYK(r, g, b, cmyk);
+			cCMYK = cmyk[0];
+			m = cmyk[1];
+			y = cmyk[2];
+			k = cmyk[3];
 		}
 
 		public int getR() {
@@ -465,7 +476,7 @@ public class TCS34725 {
 		}
 
 		public ColorOutput getColorOutput() {
-			return ColorOutput.fromValue(h);
+			return getColorFromCMYKValue();
 		}
 
 		public String toString() {
@@ -475,7 +486,87 @@ public class TCS34725 {
 					", h:" + h +
 					", s:" + s +
 					", v:" + v +
+					", cCMYK:" + cCMYK +
+					", m:" + m +
+					", y:" + y +
+					", k:" + k +
 					", c:" + c + "]";
+		}
+
+		public ColorOutput getColorFromCMYKValue() {
+			if (cCMYK >= 85 && m <= 50 && y < 20) {
+				return ColorOutput.BLUE;
+			} else if (cCMYK >= 20 && m < 20 && y >= 50) {
+				return ColorOutput.GREEN;
+			} else if (cCMYK < 5 && m >= 75 && y >= 85) {
+				return ColorOutput.RED;
+			} else if (cCMYK < 5 && m < 60 && y >= 85) {
+				return ColorOutput.YELLOW;
+			}
+
+			return ColorOutput.NONE;
+		}
+
+		public ColorOutput getColorFromHueValue() {
+			if (h >= 330 || h <= 12) {
+				return ColorOutput.RED;
+			}
+			else if (h >= 65 && h <= 160) {
+				return ColorOutput.GREEN;
+			}
+			else if (h >= 165 && h <= 285) {
+				return ColorOutput.BLUE;
+			}
+			else if (h >= 20 && h <= 55) {
+				return ColorOutput.YELLOW;
+			}
+
+			return ColorOutput.NONE;
+		}
+
+		private static float[] RGBtoCMYK(int r, int g, int b, float[] cmyk) {
+			int cmax = (r > g) ? r : g;
+			if (b > cmax) cmax = b;
+			int cmin = (r < g) ? r : g;
+			if (b < cmin) cmin = b;
+
+			if (cmax != 0) {
+				float redc = ((float) (cmax - r)) / ((float) (cmax - cmin));
+				float greenc = ((float) (cmax - g)) / ((float) (cmax - cmin));
+				float bluec = ((float) (cmax - b)) / ((float) (cmax - cmin));
+
+				if (r == cmax) {
+					redc = 255.0f;
+					greenc = (1.0f - greenc) * 255.0f;
+					bluec = (1.0f - bluec) * 255.0f;
+				} else if (g == cmax) {
+					greenc = 255.0f;
+					redc = (1.0f - redc) * 255.0f;
+					bluec = (1.0f - bluec) * 255.0f;
+				} else if (b == cmax) {
+					bluec = 255.0f;
+					redc = (1.0f - redc) * 255.0f;
+					greenc = (1.0f - greenc) * 255.0f;
+				}
+
+				// System.out.println("Redc:"+redc+",Greenc:"+greenc+",Bluec:"+bluec);
+
+				float max = (Math.max(Math.max(redc, greenc), bluec));
+				float K = 1 - max;
+				float C = (1 - redc - K) / (1 - K);
+				float M = (1 - greenc - K) / (1 - K);
+				float Y = (1 - bluec - K) / (1 - K);
+				cmyk[0] = C * 100;
+				cmyk[1] = M * 100;
+				cmyk[2] = Y * 100;
+				cmyk[3] = K * 100;
+			} else {
+				cmyk[0] = 0;
+				cmyk[1] = 0;
+				cmyk[2] = 0;
+				cmyk[3] = 0;
+			}
+			return cmyk;
 		}
 
 		public static float[] RGBtoHSV(int r, int g, int b, float[] hsvVals) {
