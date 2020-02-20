@@ -2,6 +2,7 @@ package frc.robot;
 
 import edu.wpi.first.hal.FRCNetComm;
 import edu.wpi.first.hal.HAL;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.Notifier;
 
@@ -98,6 +99,14 @@ public class TCS34725 {
 		INTEGRATION_TIME_DELAY.put(TCS34725_INTEGRATIONTIME_101MS, 0.101);   // 101ms - 42 cycles  - Max Count: 43008
 		INTEGRATION_TIME_DELAY.put(TCS34725_INTEGRATIONTIME_154MS, 0.154);   // 154ms - 64 cycles  - Max Count: 65535
 		INTEGRATION_TIME_DELAY.put(TCS34725_INTEGRATIONTIME_700MS, 0.700);   // 700ms - 256 cycles - Max Count: 65535
+
+		ICC_ColorSpace tmpColorSpace;
+		try {
+			tmpColorSpace = new ICC_ColorSpace(ICC_Profile.getInstance(Filesystem.getDeployDirectory() + "/UncoatedFOGRA29.icc"));
+		} catch (Exception e) {
+			tmpColorSpace = null;
+		}
+		iccColorSpace = tmpColorSpace;
 	}
 
 	public static final int kDeviceID = 0x44;
@@ -115,7 +124,7 @@ public class TCS34725 {
 	private ColorOutput mCachedColor = ColorOutput.NONE;
 	private boolean initialized = false;
 
-//	private static final ColorSpace iccColorSpace = new ICC_ColorSpace(ICC_Profile.getInstance(AdobeUncoatedFOGRA29.byteArray));
+	private static final ColorSpace iccColorSpace;
 
 	private static final double kNotifierPeriod = 0.020;
 	private Notifier mNotifier = new Notifier(() -> {
@@ -128,7 +137,7 @@ public class TCS34725 {
 		}
 		try {
 			getRawData(mRGBCBuffer);
-			RGBtoCMYK(mRGBCBuffer, mCMYKBuffer);
+			getCMYKColor(mRGBCBuffer, mCMYKBuffer);
 			setCachedColor(getColorFromCMYKValue(mCMYKBuffer[0], mCMYKBuffer[1], mCMYKBuffer[2], mCMYKBuffer[3]));
 		} catch (Exception ex) {
 			setInitialized(false);
@@ -328,6 +337,7 @@ public class TCS34725 {
 	}
 
 	//This method could possibly be improved by using an ICC Color Profile conversion
+	//Use this as a fallback when no ICC profile loaded
 	private static float[] RGBtoCMYK(int[] rgbc, float[] cmyk) {
 		int r = rgbc [0];
 		int g = rgbc [1];
@@ -376,14 +386,27 @@ public class TCS34725 {
 		return cmyk;
 	}
 
-//	public static float[] rgbToProfiledCmyk(float... rgb) {
-//		if (rgb.length != 3) {
-//			throw new IllegalArgumentException();
-//		}
-//
-//		float[] fromRGB = iccColorSpace.fromRGB(rgb);
-//		return fromRGB;
-//	}
+	private float[] getCMYKColor(int[] rgbc, float[] cmyk) {
+		if (iccColorSpace != null) {
+			cmyk = rgbToProfiledCmyk(rgbc[0], rgbc[1], rgbc[2]);
+			return cmyk;
+		} else {
+			return RGBtoCMYK(rgbc, cmyk);
+		}
+	}
+
+	private float[] rgbToProfiledCmyk(float... rgb) {
+		if (iccColorSpace == null) {
+			return null;
+		}
+
+		if (rgb.length != 3) {
+			throw new IllegalArgumentException();
+		}
+
+		float[] fromRGB = iccColorSpace.fromRGB(rgb);
+		return fromRGB;
+	}
 
 	private static ColorOutput getColorFromCMYKValue(float c, float m, float y, float k) {
 		if (c >= 85 && m <= 50 && y < 20) {
