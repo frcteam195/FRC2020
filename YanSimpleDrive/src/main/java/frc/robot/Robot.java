@@ -50,6 +50,9 @@ public class Robot extends TimedRobot {
 		setBrakeMode(false, true);
 	}
 
+	private void setBrakeMode(boolean brake) {
+		setBrakeMode(brake, false);
+	}
 	private void setBrakeMode(boolean brake, boolean force) {
 		if (brakeMode != brake || force) {
 			NeutralMode m = brake ? NeutralMode.Brake : NeutralMode.Coast;
@@ -87,9 +90,9 @@ public class Robot extends TimedRobot {
 		rightDriveMaster.set(ControlMode.PercentOutput, Math.min(Math.max(y-x, -1), 1));
 
 		if (Math.abs(driveJoystick.getRawAxis(2)) > 0.6) {
-			setBrakeMode(true, false);
+			setBrakeMode(true);
 		} else {
-			setBrakeMode(false, false);
+			setBrakeMode(false);
 		}
 	}
 

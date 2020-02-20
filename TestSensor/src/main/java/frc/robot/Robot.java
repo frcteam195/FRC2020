@@ -16,7 +16,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     if (printCounter++ % 50 == 0) {
-      System.out.println(colorSensor.getRawData().toString() + colorSensor.getColorOutput().toString());
+      System.out.println(colorSensor.getColor().toString());
     }
   }
 
