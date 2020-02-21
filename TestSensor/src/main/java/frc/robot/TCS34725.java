@@ -357,28 +357,25 @@ public class TCS34725 {
 	//This method could possibly be improved by using an ICC Color Profile conversion
 	//Use this as a fallback when no ICC profile loaded
 	private static float[] RGBtoCMYK(float[] rgbc, float[] cmyk) {
-		float r = rgbc [0];
-		float g = rgbc [1];
-		float b = rgbc [2];
-		float cmax = (r > g) ? r : g;
-		if (b > cmax) cmax = b;
-		float cmin = (r < g) ? r : g;
-		if (b < cmin) cmin = b;
+		float cmax = (rgbc[0] > rgbc[1]) ? rgbc[0] : rgbc[1];
+		if (rgbc[2] > cmax) cmax = rgbc[2];
+		float cmin = (rgbc[0] < rgbc[1]) ? rgbc[0] : rgbc[1];
+		if (rgbc[2] < cmin) cmin = rgbc[2];
 
 		if (cmax != 0) {
-			float redc = ((float) (cmax - r)) / ((float) (cmax - cmin));
-			float greenc = ((float) (cmax - g)) / ((float) (cmax - cmin));
-			float bluec = ((float) (cmax - b)) / ((float) (cmax - cmin));
+			float redc = (cmax - rgbc[0]) / (cmax - cmin);
+			float greenc = (cmax - rgbc[1]) / (cmax - cmin);
+			float bluec = (cmax - rgbc[2]) / (cmax - cmin);
 
-			if (r == cmax) {
+			if (rgbc[0] == cmax) {
 				redc = 255.0f;
 				greenc = (1.0f - greenc) * 255.0f;
 				bluec = (1.0f - bluec) * 255.0f;
-			} else if (g == cmax) {
+			} else if (rgbc[1] == cmax) {
 				greenc = 255.0f;
 				redc = (1.0f - redc) * 255.0f;
 				bluec = (1.0f - bluec) * 255.0f;
-			} else if (b == cmax) {
+			} else if (rgbc[2] == cmax) {
 				bluec = 255.0f;
 				redc = (1.0f - redc) * 255.0f;
 				greenc = (1.0f - greenc) * 255.0f;
@@ -420,9 +417,9 @@ public class TCS34725 {
 		if (saturation == 0)
 			hue = 0;
 		else {
-			float redc = ((float) (cmax - rgbVals[0])) / ((float) (cmax - cmin));
-			float greenc = ((float) (cmax - rgbVals[1])) / ((float) (cmax - cmin));
-			float bluec = ((float) (cmax - rgbVals[2])) / ((float) (cmax - cmin));
+			float redc = (cmax - rgbVals[0]) / (cmax - cmin);
+			float greenc = (cmax - rgbVals[1]) / (cmax - cmin);
+			float bluec = (cmax - rgbVals[2]) / (cmax - cmin);
 			if (rgbVals[0] == cmax)
 				hue = bluec - greenc;
 			else if (rgbVals[1] == cmax)
