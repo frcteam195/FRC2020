@@ -99,14 +99,6 @@ public class TCS34725 {
 		INTEGRATION_TIME_DELAY.put(TCS34725_INTEGRATIONTIME_101MS, 0.101);   // 101ms - 42 cycles  - Max Count: 43008
 		INTEGRATION_TIME_DELAY.put(TCS34725_INTEGRATIONTIME_154MS, 0.154);   // 154ms - 64 cycles  - Max Count: 65535
 		INTEGRATION_TIME_DELAY.put(TCS34725_INTEGRATIONTIME_700MS, 0.700);   // 700ms - 256 cycles - Max Count: 65535
-
-		ICC_ColorSpace tmpColorSpace;
-		try {
-			tmpColorSpace = new ICC_ColorSpace(ICC_Profile.getInstance(Filesystem.getDeployDirectory() + "/UncoatedFOGRA29.icc"));
-		} catch (Exception e) {
-			tmpColorSpace = null;
-		}
-		iccColorSpace = tmpColorSpace;
 	}
 
 	public static final int kDeviceID = 0x44;
@@ -119,12 +111,12 @@ public class TCS34725 {
 	private ThreadRateControl trc = new ThreadRateControl();
 	private TimeoutTimer timeoutTimer = new TimeoutTimer(INTEGRATION_TIME_DELAY.get(INTEGRATION_TIME_DEFAULT));
 	private byte[] readBuffer = new byte[2];
+	private short[] mRawBuffer = new short[4];
 	private float[] mCMYKBuffer = new float[4];
-	private int[] mRGBCBuffer = new int[4];
+	private float[] mRGBBuffer = new float[3];
+	private float[] mHSVBuffer = new float[3];
 	private ColorOutput mCachedColor = ColorOutput.NONE;
 	private boolean initialized = false;
-
-	private static final ColorSpace iccColorSpace;
 
 	private static final double kNotifierPeriod = 0.020;
 	private Notifier mNotifier = new Notifier(() -> {
@@ -136,14 +128,26 @@ public class TCS34725 {
 			}
 		}
 		try {
-			getRawData(mRGBCBuffer);
-			getCMYKColor(mRGBCBuffer, mCMYKBuffer);
-			setCachedColor(getColorFromCMYKValue(mCMYKBuffer[0], mCMYKBuffer[1], mCMYKBuffer[2], mCMYKBuffer[3]));
+			getRawData(mRawBuffer);
+			getRGB(mRawBuffer, mRGBBuffer);
+			RGBtoCMYK(mRGBBuffer, mCMYKBuffer);
+			RGBtoHSV(mRGBBuffer, mHSVBuffer);
+			setCachedColor(getColorFromCoupledOutput(mCMYKBuffer, mHSVBuffer));
 		} catch (Exception ex) {
 			setInitialized(false);
 			System.err.println(ex.toString());
 		}
 	});
+
+	public float[] getmRGBBuffer() { return mRGBBuffer; }
+
+	public float[] getmCMYKBuffer() {
+		return mCMYKBuffer;
+	}
+
+	public float[] getmHSVBuffer() {
+		return mHSVBuffer;
+	}
 
 	public TCS34725(boolean... verbose) {
 		this(I2C.Port.kOnboard, verbose);
@@ -254,7 +258,7 @@ public class TCS34725 {
 		this.write8(TCS34725_CONTROL, gain);
 	}
 
-	private int[] getRawData(int[] rgbc) {
+	private short[] getRawData(short[] rgbc) {
 		if (timeoutTimer.isTimedOut()) {
 			try {
 				rgbc[0] = readU16(TCS34725_RDATAL);
@@ -273,6 +277,20 @@ public class TCS34725 {
 			}
 		}
 		return rgbc;
+	}
+
+	private float[] getRGB(short[] rawData, float[] rgb) {
+		float sum = rawData[3];
+
+		if (!Float.isFinite(sum) || sum == 0) {
+			rgb[0] = rgb[1] = rgb[2] = 0;
+		} else {
+			rgb[0] = (float) rawData[0] / sum * 255.0f;
+			rgb[1] = (float) rawData[1] / sum * 255.0f;
+			rgb[2] = (float) rawData[2] / sum * 255.0f;
+		}
+
+		return rgb;
 	}
 
 	private void setInterrupt(boolean intrpt) throws Exception {
@@ -294,30 +312,30 @@ public class TCS34725 {
 		}
 	}
 
-	private synchronized int readU16(int register) throws TransferAbortedException {
+	private synchronized short readU16(int register) throws TransferAbortedException {
 		readBuffer[0] = 0;
 		readBuffer[1] = 0;
 		if (i2c.read(TCS34725_COMMAND_BIT | TCS34725_COMMAND_AUTO_INCREMENT | register, 2, readBuffer) == true) {
 			throw new TransferAbortedException("Read aborted");
 		}
 
-		int result = ((readBuffer[1] & 0xFF) << 8) | (readBuffer[0] & 0xFF);
+		short result = (short)(((readBuffer[1] & 0xFF) << 8) | (readBuffer[0] & 0xFF));
 		if (verbose) {
 			System.out.println("(U16) I2C: Device " + toHex(TCS34725_ADDRESS) + " returned " + toHex(result) + " from reg " + toHex(~TCS34725_COMMAND_BIT & register));
 		}
 		return result;
 	}
 
-	private synchronized int readU8(int reg) throws TransferAbortedException {
-		int result = 0;
+	private synchronized byte readU8(int register) throws TransferAbortedException {
+		byte result = 0;
 		readBuffer[0] = 0;
 		readBuffer[1] = 0;
-		if (i2c.read(TCS34725_COMMAND_BIT | reg, 1, readBuffer) == true) {
+		if (i2c.read(TCS34725_COMMAND_BIT | register, 1, readBuffer) == true) {
 			throw new TransferAbortedException("Read aborted");
 		}
-		result = readBuffer[0] & 0xFF;
+		result = (byte)(readBuffer[0] & 0xFF);
 		if (verbose) {
-			System.out.println("(U8) I2C: Device " + toHex(TCS34725_ADDRESS) + " returned " + toHex(result) + " from reg " + toHex(~TCS34725_COMMAND_BIT & reg));
+			System.out.println("(U8) I2C: Device " + toHex(TCS34725_ADDRESS) + " returned " + toHex(result) + " from reg " + toHex(~TCS34725_COMMAND_BIT & register));
 		}
 		return result;
 	}
@@ -338,13 +356,13 @@ public class TCS34725 {
 
 	//This method could possibly be improved by using an ICC Color Profile conversion
 	//Use this as a fallback when no ICC profile loaded
-	private static float[] RGBtoCMYK(int[] rgbc, float[] cmyk) {
-		int r = rgbc [0];
-		int g = rgbc [1];
-		int b = rgbc [2];
-		int cmax = (r > g) ? r : g;
+	private static float[] RGBtoCMYK(float[] rgbc, float[] cmyk) {
+		float r = rgbc [0];
+		float g = rgbc [1];
+		float b = rgbc [2];
+		float cmax = (r > g) ? r : g;
 		if (b > cmax) cmax = b;
-		int cmin = (r < g) ? r : g;
+		float cmin = (r < g) ? r : g;
 		if (b < cmin) cmin = b;
 
 		if (cmax != 0) {
@@ -366,8 +384,6 @@ public class TCS34725 {
 				greenc = (1.0f - greenc) * 255.0f;
 			}
 
-			// System.out.println("Redc:"+redc+",Greenc:"+greenc+",Bluec:"+bluec);
-
 			float max = (Math.max(Math.max(redc, greenc), bluec));
 			float K = 1 - max;
 			float C = (1 - redc - K) / (1 - K);
@@ -386,36 +402,82 @@ public class TCS34725 {
 		return cmyk;
 	}
 
-	private float[] getCMYKColor(int[] rgbc, float[] cmyk) {
-		if (iccColorSpace != null) {
-			cmyk = rgbToProfiledCmyk(rgbc[0], rgbc[1], rgbc[2]);
-			return cmyk;
-		} else {
-			return RGBtoCMYK(rgbc, cmyk);
+	public synchronized static float[] RGBtoHSV(float[] rgbVals, float[] hsvVals) {
+		float hue, saturation, brightness;
+		if (hsvVals == null) {
+			hsvVals = new float[3];
 		}
-	}
+		float cmax = (rgbVals[0] > rgbVals[1]) ? rgbVals[0] : rgbVals[1];
+		if (rgbVals[2] > cmax) cmax = rgbVals[2];
+		float cmin = (rgbVals[0] < rgbVals[1]) ? rgbVals[0] : rgbVals[1];
+		if (rgbVals[2] < cmin) cmin = rgbVals[2];
 
-	private float[] rgbToProfiledCmyk(float... rgb) {
-		if (iccColorSpace == null) {
-			return null;
+		brightness = ((float) cmax) / 255.0f;
+		if (cmax != 0)
+			saturation = ((float) (cmax - cmin)) / ((float) cmax);
+		else
+			saturation = 0;
+		if (saturation == 0)
+			hue = 0;
+		else {
+			float redc = ((float) (cmax - rgbVals[0])) / ((float) (cmax - cmin));
+			float greenc = ((float) (cmax - rgbVals[1])) / ((float) (cmax - cmin));
+			float bluec = ((float) (cmax - rgbVals[2])) / ((float) (cmax - cmin));
+			if (rgbVals[0] == cmax)
+				hue = bluec - greenc;
+			else if (rgbVals[1] == cmax)
+				hue = 2.0f + redc - bluec;
+			else
+				hue = 4.0f + greenc - redc;
+			hue = hue / 6.0f;
+			if (hue < 0)
+				hue = hue + 1.0f;
 		}
-
-		if (rgb.length != 3) {
-			throw new IllegalArgumentException();
-		}
-
-		float[] fromRGB = iccColorSpace.fromRGB(rgb);
-		return fromRGB;
+		hsvVals[0] = hue * 360;
+		hsvVals[1] = saturation * 255;
+		hsvVals[2] = brightness;
+		return hsvVals;
 	}
 
 	private static ColorOutput getColorFromCMYKValue(float c, float m, float y, float k) {
-		if (c >= 85 && m <= 50 && y < 20) {
+		if ((c >= 85 && m <= 50 && y < 20)) {
 			return ColorOutput.BLUE;
 		} else if (c >= 20 && m < 20 && y >= 50) {
 			return ColorOutput.GREEN;
 		} else if (c < 5 && m >= 75 && y >= 85) {
 			return ColorOutput.RED;
 		} else if (c < 5 && m < 60 && y >= 85) {
+			return ColorOutput.YELLOW;
+		}
+
+		return ColorOutput.NONE;
+	}
+
+	private static ColorOutput getColorFromCoupledOutput(float[] cmykArr, float[] hsvArr) {
+		if ((cmykArr[0] >= 85 && cmykArr[1] <= 50 && cmykArr[2] < 20) && (hsvArr[0] >= 165 && hsvArr[0] <= 285)) {
+			return ColorOutput.BLUE;
+		} else if ((cmykArr[0] >= 20 && cmykArr[1] < 20 && cmykArr[2] >= 50) && (hsvArr[0] >= 65 && hsvArr[0] <= 160 && hsvArr[1] < 130)) {
+			return ColorOutput.GREEN;
+		} else if ((cmykArr[0] < 5 && cmykArr[1] >= 70 && cmykArr[2] >= 85) && (hsvArr[0] >= 330 || hsvArr[0] <= 12)) {
+			return ColorOutput.RED;
+		} else if ((cmykArr[0] < 5 && cmykArr[1] < 70 && cmykArr[2] >= 85) && (hsvArr[0] >= 20 && hsvArr[0] <= 55 && hsvArr[1] >= 100)) {
+			return ColorOutput.YELLOW;
+		}
+
+		return ColorOutput.NONE;
+	}
+
+	public static ColorOutput getColorFromHueValue(float h, float s, float v) {
+		if (h >= 330 || h <= 12) {
+			return ColorOutput.RED;
+		}
+		else if (h >= 65 && h <= 160) {
+			return ColorOutput.GREEN;
+		}
+		else if (h >= 165 && h <= 285) {
+			return ColorOutput.BLUE;
+		}
+		else if (h >= 20 && h <= 55) {
 			return ColorOutput.YELLOW;
 		}
 
