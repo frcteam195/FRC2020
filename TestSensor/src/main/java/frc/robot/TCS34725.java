@@ -103,7 +103,7 @@ public class TCS34725 {
 
 	public static final int kDeviceID = 0x44;
 	public final static int INTEGRATION_TIME_DEFAULT = TCS34725_INTEGRATIONTIME_50MS;
-	public final static int GAIN_DEFAULT = TCS34725_GAIN_4X;
+	public final static int GAIN_DEFAULT = TCS34725_GAIN_16X;
 	private boolean verbose = false;
 	private int integrationTime;
 	private int gain;
@@ -129,13 +129,12 @@ public class TCS34725 {
 		}
 		try {
 			getRawData(mRawBuffer);
-			getRGB(mRawBuffer, mRGBBuffer);
+			getRGBNormed(mRawBuffer, mRGBBuffer);
 			RGBtoCMYK(mRGBBuffer, mCMYKBuffer);
 			RGBtoHSV(mRGBBuffer, mHSVBuffer);
 			setCachedColor(getColorFromCoupledOutput(mCMYKBuffer, mHSVBuffer));
 		} catch (Exception ex) {
 			setInitialized(false);
-			System.err.println(ex.toString());
 		}
 	});
 
@@ -266,6 +265,7 @@ public class TCS34725 {
 				rgbc[2] = readU16(TCS34725_BDATAL);
 				rgbc[3] = readU16(TCS34725_CDATAL);
 			} catch (Exception ex) {
+				setInitialized(false);
 				rgbc[0] = 0;
 				rgbc[1] = 0;
 				rgbc[2] = 0;
@@ -290,6 +290,19 @@ public class TCS34725 {
 			rgb[2] = (float) rawData[2] / sum * 255.0f;
 		}
 
+		return rgb;
+	}
+
+	private float[] getRGBNormed(short[] rawData, float[] rgb) {
+		getRGB(rawData, rgb);
+		float cmax = (rgb[0] > rgb[1]) ? rgb[0] : rgb[1];
+		if (rgb[2] > cmax) cmax = rgb[2];
+		if (cmax != 0) {
+			cmax = 255.0f / cmax;
+			rgb[0] *= cmax;
+			rgb[1] *= cmax;
+			rgb[2] *= cmax;
+		}
 		return rgb;
 	}
 
