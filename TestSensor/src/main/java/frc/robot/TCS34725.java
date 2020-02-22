@@ -103,7 +103,7 @@ public class TCS34725 {
 
 	public static final int kDeviceID = 0x44;
 	public final static int INTEGRATION_TIME_DEFAULT = TCS34725_INTEGRATIONTIME_50MS;
-	public final static int GAIN_DEFAULT = TCS34725_GAIN_16X;
+	public final static int GAIN_DEFAULT = TCS34725_GAIN_4X;
 	private boolean verbose = false;
 	private int integrationTime;
 	private int gain;

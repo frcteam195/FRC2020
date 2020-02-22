@@ -4,11 +4,13 @@ import edu.wpi.first.wpilibj.TimedRobot;
 
 public class Robot extends TimedRobot {
 
-  private TCS34725 colorSensor;
+//  private TCS34725 colorSensor;
+  private CKCANTCS34725 colorSensorCAN;
 
   @Override
   public void robotInit() {
-    colorSensor = new TCS34725();
+    colorSensorCAN = new CKCANTCS34725(1);
+//    colorSensor = new TCS34725();
   }
 
 
@@ -16,10 +18,10 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     if (printCounter++ % 50 == 0) {
-      System.out.println("r:" + colorSensor.getmRGBBuffer()[0] + ",g:"+ colorSensor.getmRGBBuffer()[1] + ",b:" + colorSensor.getmRGBBuffer()[2]);
-      System.out.println("c:" + colorSensor.getmCMYKBuffer()[0] + ",m:"+ colorSensor.getmCMYKBuffer()[1] + ",y:" + colorSensor.getmCMYKBuffer()[2] + ",k:" + colorSensor.getmCMYKBuffer()[3]);
-      System.out.println("h:" + colorSensor.getmHSVBuffer()[0] + ",s:"+ colorSensor.getmHSVBuffer()[1] + ",v:" + colorSensor.getmHSVBuffer()[2]);
-      System.out.println(colorSensor.getColor().toString());
+      System.out.println("r:" + colorSensorCAN.getmRGBBuffer()[0] + ",g:"+ colorSensorCAN.getmRGBBuffer()[1] + ",b:" + colorSensorCAN.getmRGBBuffer()[2]);
+      System.out.println("c:" + colorSensorCAN.getmCMYKBuffer()[0] + ",m:"+ colorSensorCAN.getmCMYKBuffer()[1] + ",y:" + colorSensorCAN.getmCMYKBuffer()[2] + ",k:" + colorSensorCAN.getmCMYKBuffer()[3]);
+      System.out.println("h:" + colorSensorCAN.getmHSVBuffer()[0] + ",s:"+ colorSensorCAN.getmHSVBuffer()[1] + ",v:" + colorSensorCAN.getmHSVBuffer()[2]);
+      System.out.println(colorSensorCAN.getColor().toString());
     }
   }
 
