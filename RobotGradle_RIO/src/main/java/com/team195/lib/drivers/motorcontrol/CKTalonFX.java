@@ -12,6 +12,7 @@ import com.team195.lib.util.CachedValue;
 
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class CKTalonFX extends TalonFX implements TuneableMotorController {
@@ -21,6 +22,8 @@ public class CKTalonFX extends TalonFX implements TuneableMotorController {
 	private final PDPBreaker motorBreaker;
 	private AtomicBoolean prevForwardLimitVal = new AtomicBoolean(false);
 	private AtomicBoolean prevReverseLimitVal = new AtomicBoolean(false);
+
+	private ArrayList<CKTalonFX> followerTalons = new ArrayList<>();
 
 	private CachedValue<Double> localQuadPosition;
 
@@ -58,10 +61,18 @@ public class CKTalonFX extends TalonFX implements TuneableMotorController {
 		set(MCControlMode.PercentOut, 0, 0, 0);
 	}
 
-	public CKTalonFX(int deviceId, CKTalonFX masterTalon, PDPBreaker breakerCurrent, boolean inverted) {
+	public CKTalonFX(int deviceId, CKTalonFX masterTalon, PDPBreaker breakerCurrent) {
 		this(deviceId, breakerCurrent, normalSlaveConfig);
 		super.follow(masterTalon);
-		super.setInverted(inverted);
+		masterTalon.followerTalons.add(this);
+	}
+
+	public boolean configMasterAndSlaves(Function<CKTalonFX, ErrorCode> configMethod) {
+		boolean success = runTalonFunctionWithRetry(configMethod, this) == ErrorCode.OK;
+		for(CKTalonFX t : followerTalons) {
+			success &= runTalonFunctionWithRetry(configMethod, t) == ErrorCode.OK;
+		}
+		return success;
 	}
 
 	private void initCachedValues() {
@@ -331,6 +342,20 @@ public class CKTalonFX extends TalonFX implements TuneableMotorController {
 
 		do {
 			eCode = talonCall.apply(null);
+		} while(eCode != ErrorCode.OK && retryCounter++ < Constants.kTalonRetryCount);
+
+		if (retryCounter >= Constants.kTalonRetryCount || eCode != ErrorCode.OK)
+			ConsoleReporter.report("Failed to set parameter Talon " + super.getDeviceID() + " !!!!!!", MessageLevel.DEFCON1);
+
+		return eCode;
+	}
+
+	private synchronized ErrorCode runTalonFunctionWithRetry(Function<CKTalonFX, ErrorCode> talonCall, CKTalonFX talon) {
+		ErrorCode eCode;
+		int retryCounter = 0;
+
+		do {
+			eCode = talonCall.apply(talon);
 		} while(eCode != ErrorCode.OK && retryCounter++ < Constants.kTalonRetryCount);
 
 		if (retryCounter >= Constants.kTalonRetryCount || eCode != ErrorCode.OK)

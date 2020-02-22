@@ -1,5 +1,6 @@
 package com.team195.frc.subsystems;
 
+import com.ctre.phoenix.ErrorCode;
 import com.team195.frc.constants.CalConstants;
 import com.team195.frc.constants.DeviceIDConstants;
 import com.team195.frc.constants.TestConstants;
@@ -113,30 +114,32 @@ public class Drive extends Subsystem {
 		mPeriodicIO = new PeriodicIO();
 
 		mLeftMaster = new CKTalonFX(DeviceIDConstants.kLeftDriveMasterId, true, PDPBreaker.B40A);
-		mLeftMaster.setInverted(false);
+		mLeftSlaveA = new CKTalonFX(DeviceIDConstants.kLeftDriveSlaveAId, mLeftMaster, PDPBreaker.B40A);
+		mLeftSlaveB = new CKTalonFX(DeviceIDConstants.kLeftDriveSlaveBId, mLeftMaster, PDPBreaker.B40A);
+
 		mLeftMaster.setPIDF(CalConstants.kDriveLowGearVelocityKp, CalConstants.kDriveLowGearVelocityKi, CalConstants.kDriveLowGearVelocityKd, CalConstants.kDriveLowGearVelocityKf);
 		mLeftMaster.setDFilter(CalConstants.kDriveLowGearVelocityDFilter);
 		mLeftMaster.setMotionParameters(CalConstants.kDriveLowGearPositionCruiseVel, CalConstants.kDriveLowGearPositionAccel);
-		mLeftMaster.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim);
-
-		mLeftSlaveA = new CKTalonFX(DeviceIDConstants.kLeftDriveSlaveAId, mLeftMaster, PDPBreaker.B40A, false);
-		mLeftSlaveA.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim);
-
-		mLeftSlaveB = new CKTalonFX(DeviceIDConstants.kLeftDriveSlaveBId, mLeftMaster, PDPBreaker.B40A, false);
-		mLeftSlaveB.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim);
+		mLeftMaster.configMasterAndSlaves((t) -> {
+			t.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim);
+			return ErrorCode.OK;
+		});
 
 
 		mRightMaster = new CKTalonFX(DeviceIDConstants.kRightDriveMasterId, true, PDPBreaker.B40A);
-		mRightMaster.setInverted(true);
+		mRightSlaveA = new CKTalonFX(DeviceIDConstants.kRightDriveSlaveAId, mRightMaster, PDPBreaker.B40A);
+		mRightSlaveB = new CKTalonFX(DeviceIDConstants.kRightDriveSlaveBId, mRightMaster, PDPBreaker.B40A);
+
 		mRightMaster.setPIDF(CalConstants.kDriveLowGearVelocityKp, CalConstants.kDriveLowGearVelocityKi, CalConstants.kDriveLowGearVelocityKd, CalConstants.kDriveLowGearVelocityKf);
 		mRightMaster.setMotionParameters(CalConstants.kDriveLowGearPositionCruiseVel, CalConstants.kDriveLowGearPositionAccel);
-		mRightMaster.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim);
-
-		mRightSlaveA = new CKTalonFX(DeviceIDConstants.kRightDriveSlaveAId, mRightMaster, PDPBreaker.B40A, false);
-		mRightSlaveA.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim);
-
-		mRightSlaveB = new CKTalonFX(DeviceIDConstants.kRightDriveSlaveBId, mRightMaster, PDPBreaker.B40A, false);
-		mRightSlaveB.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim);
+		mRightMaster.configMasterAndSlaves((t) -> {
+			t.setInverted(true);
+			return ErrorCode.OK;
+		});
+		mRightMaster.configMasterAndSlaves((t) -> {
+			t.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim);
+			return ErrorCode.OK;
+		});
 
 		reloadGains();
 
