@@ -8,11 +8,11 @@ import com.team195.frc.loops.Loop;
 import com.team195.frc.reporters.ConsoleReporter;
 import com.team195.frc.reporters.ReflectingLogDataGenerator;
 import com.team195.lib.util.ElapsedTimer;
-import com.team195.lib.util.TurretHelper;
 import com.team254.lib.geometry.Pose2d;
 import com.team254.lib.geometry.Rotation2d;
 import com.team254.lib.geometry.Translation2d;
 import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Timer;
 
@@ -30,6 +30,7 @@ public class VisionTracker extends Subsystem {
 	private NetworkTable mCurrentTargetingLimelightNT;
 
 	private NetworkTable limelightTurret = NetworkTableInstance.getDefault().getTable("limelight-turret");
+	private NetworkTableEntry pipelineEntry = limelightTurret.getEntry("pipeline");
 
 	private final ElapsedTimer loopTimer = new ElapsedTimer();
 
@@ -41,7 +42,7 @@ public class VisionTracker extends Subsystem {
 
 	}
 
-		private final Loop mLoop = new Loop() {
+	private final Loop mLoop = new Loop() {
 		@Override
 		public void onFirstStart(double timestamp) {
 			synchronized (VisionTracker.this) {
@@ -57,17 +58,19 @@ public class VisionTracker extends Subsystem {
 
 		@Override
 		public void onLoop(double timestamp) {
+			loopTimer.start();
 			synchronized (VisionTracker.this) {
 				switch (mTargetMode) {
 					case AUTO_TARGET:
-						mPeriodicIO.pipelineFront = mVisionEnabled ? 1 : 0;
+						mPeriodicIO.pipeline_front = mVisionEnabled ? 1 : 0;
 						mCurrentTargetingLimelightNT = limelightTurret;
 						break;
 					default:
-						mPeriodicIO.pipelineFront = mVisionEnabled ? 1 : 0;
+						mPeriodicIO.pipeline_front = mVisionEnabled ? 1 : 0;
 						break;
 				}
 			}
+			mPeriodicIO.vision_loop_time += loopTimer.hasElapsed();
 		}
 
 		@Override
@@ -106,19 +109,19 @@ public class VisionTracker extends Subsystem {
 	}
 
 	public boolean isTargetFound() {
-		return mVisionEnabled && mPeriodicIO.targetValid > 0;
+		return mVisionEnabled && mPeriodicIO.target_valid > 0;
 	}
 
 	public double getTargetDistance() {
-		return mVisionEnabled ? mPeriodicIO.targetDistance : 0;
+		return mVisionEnabled ? mPeriodicIO.target_distance : 0;
 	}
 
 	public double getTargetHorizAngleDev() {
-		return mVisionEnabled ? mPeriodicIO.targetHorizontalDeviation : 0;
+		return mVisionEnabled ? mPeriodicIO.target_horizontal_deviation : 0;
 	}
 
 	public double getTargetVertAngleDev() {
-		return mVisionEnabled ? mPeriodicIO.targetVerticalDeviation : 0;
+		return mVisionEnabled ? mPeriodicIO.target_vertical_deviation : 0;
 	}
 
 	public synchronized void setVisionEnabled(boolean enabled) {
@@ -130,37 +133,41 @@ public class VisionTracker extends Subsystem {
 	}
 
 	public double getTargetSkew() {
-		return mPeriodicIO.targetSkew;
+		return mPeriodicIO.target_skew;
 	}
 
 	public Pose2d getCameraToTargetPose() {
-		return mPeriodicIO.cameraToTargetPose;
+		return mPeriodicIO.camera_to_target_pose;
 	}
 
 	@Override
 	public synchronized List<Object> generateReport() {
-		return mLogDataGenerator.generateData(mPeriodicIO);
+		loopTimer.start();
+		mTmpHandle = mLogDataGenerator.generateData(mPeriodicIO);
+		mPeriodicIO.vision_loop_time += loopTimer.hasElapsed();
+		return mTmpHandle;
 	}
+	private List<Object> mTmpHandle;
 
 	@Override
 	public synchronized void readPeriodicInputs() {
 		loopTimer.start();
 		try {
 			if (mVisionEnabled) {
-				mPeriodicIO.targetValid = mCurrentTargetingLimelightNT.getEntry("tv").getDouble(0);
-				mPeriodicIO.targetHorizontalDeviation = mCurrentTargetingLimelightNT.getEntry("tx").getDouble(0);
-				mPeriodicIO.targetVerticalDeviation = mCurrentTargetingLimelightNT.getEntry("ty").getDouble(0);
-				mPeriodicIO.targetArea = mCurrentTargetingLimelightNT.getEntry("ta").getDouble(0);
-				mPeriodicIO.targetSkew = mCurrentTargetingLimelightNT.getEntry("ts").getDouble(0);
-				mPeriodicIO.targetLatency = mCurrentTargetingLimelightNT.getEntry("tl").getDouble(0);
-				mPeriodicIO.targetShortSide = mCurrentTargetingLimelightNT.getEntry("tshort").getDouble(0);
-				mPeriodicIO.targetLongSide = mCurrentTargetingLimelightNT.getEntry("tlong").getDouble(0);
-				mPeriodicIO.targetHorizontalSide = mCurrentTargetingLimelightNT.getEntry("thor").getDouble(0);
-				mPeriodicIO.targetVerticalSide = mCurrentTargetingLimelightNT.getEntry("tvert").getDouble(0);
-				mPeriodicIO.getPipelineValue = mCurrentTargetingLimelightNT.getEntry("getpipe").getDouble(0);
-				mPeriodicIO.cameraTranslation = new CameraTranslation(mCurrentTargetingLimelightNT.getEntry("camtran").getDoubleArray(mPeriodicIO.cameraTranslationRotationDefaultArray));
-				mPeriodicIO.cameraToTargetPose = new Pose2d(new Translation2d(mPeriodicIO.cameraTranslation.x, mPeriodicIO.cameraTranslation.y), Rotation2d.fromDegrees(mPeriodicIO.cameraTranslation.yaw));
-				if (!mPeriodicIO.cameraToTargetPose.equals(mPeriodicIO.prevCameraToTargetPose)) {
+				mPeriodicIO.target_valid = mCurrentTargetingLimelightNT.getEntry("tv").getDouble(0);
+				mPeriodicIO.target_horizontal_deviation = mCurrentTargetingLimelightNT.getEntry("tx").getDouble(0);
+				mPeriodicIO.target_vertical_deviation = mCurrentTargetingLimelightNT.getEntry("ty").getDouble(0);
+				mPeriodicIO.target_area = mCurrentTargetingLimelightNT.getEntry("ta").getDouble(0);
+				mPeriodicIO.target_skew = mCurrentTargetingLimelightNT.getEntry("ts").getDouble(0);
+				mPeriodicIO.target_latency = mCurrentTargetingLimelightNT.getEntry("tl").getDouble(0);
+				mPeriodicIO.target_short_side = mCurrentTargetingLimelightNT.getEntry("tshort").getDouble(0);
+				mPeriodicIO.target_long_side = mCurrentTargetingLimelightNT.getEntry("tlong").getDouble(0);
+				mPeriodicIO.target_horizontal_side = mCurrentTargetingLimelightNT.getEntry("thor").getDouble(0);
+				mPeriodicIO.target_vertical_side = mCurrentTargetingLimelightNT.getEntry("tvert").getDouble(0);
+				mPeriodicIO.get_pipeline_value = mCurrentTargetingLimelightNT.getEntry("getpipe").getDouble(0);
+				mPeriodicIO.camera_translation = new CameraTranslation(mCurrentTargetingLimelightNT.getEntry("camtran").getDoubleArray(mPeriodicIO.camera_translation_rotation_default_array));
+				mPeriodicIO.camera_to_target_pose = new Pose2d(new Translation2d(mPeriodicIO.camera_translation.x, mPeriodicIO.camera_translation.y), Rotation2d.fromDegrees(mPeriodicIO.camera_translation.yaw));
+				if (!mPeriodicIO.camera_to_target_pose.equals(mPeriodicIO.prev_camera_to_target_pose)) {
 //					Pose2d targetToCamera = mPeriodicIO.cameraToTargetPose.inverse();
 //					Pose2d cameraToTurret = CalConstants.kTurretToCamera.inverse();
 //					Pose2d targetToTurret = targetToCamera.transformBy(cameraToTurret);
@@ -169,40 +176,42 @@ public class VisionTracker extends Subsystem {
 //					Pose2d fieldToVehicle = TargetingConstants.fieldToOuterTarget.transformBy(targetToVehicle);
 //					RobotState.getInstance().addFieldToVehicleObservation(Timer.getFPGATimestamp(), fieldToVehicle);
 					Pose2d latestAbsoluteFieldToVehicle = TargetingConstants.fieldToOuterTarget.transformBy(
-							mPeriodicIO.cameraToTargetPose.inverse()    //May want to use robot angle here instead of angle from Camera pose
+							mPeriodicIO.camera_to_target_pose.inverse()    //May want to use robot angle here instead of angle from Camera pose
 							.transformBy(CalConstants.kTurretToCamera.inverse())
 							.transformBy(Turret.getInstance().getLatestVehicleToTurretPose().inverse())
 					);
 					RobotState.getInstance().addFieldToVehicleObservation(Timer.getFPGATimestamp(), latestAbsoluteFieldToVehicle);
-					mPeriodicIO.prevCameraToTargetPose = mPeriodicIO.cameraToTargetPose;
+					mPeriodicIO.prev_camera_to_target_pose = mPeriodicIO.camera_to_target_pose;
 				}
 			}
 			else {
-				mPeriodicIO.targetValid = 0;
-				mPeriodicIO.targetHorizontalDeviation = 0;
-				mPeriodicIO.targetVerticalDeviation = 0;
-				mPeriodicIO.targetArea = 0;
-				mPeriodicIO.targetSkew = 0;
-				mPeriodicIO.targetLatency = 0;
-				mPeriodicIO.targetShortSide = 0;
-				mPeriodicIO.targetLongSide = 0;
-				mPeriodicIO.targetHorizontalSide = 0;
-				mPeriodicIO.targetVerticalSide = 0;
-				mPeriodicIO.getPipelineValue = 0;
-				mPeriodicIO.cameraTranslation = CameraTranslation.identity;
-				mPeriodicIO.cameraToTargetPose = Pose2d.identity();
-				mPeriodicIO.targetDistance = 0;
+				mPeriodicIO.target_valid = 0;
+				mPeriodicIO.target_horizontal_deviation = 0;
+				mPeriodicIO.target_vertical_deviation = 0;
+				mPeriodicIO.target_area = 0;
+				mPeriodicIO.target_skew = 0;
+				mPeriodicIO.target_latency = 0;
+				mPeriodicIO.target_short_side = 0;
+				mPeriodicIO.target_long_side = 0;
+				mPeriodicIO.target_horizontal_side = 0;
+				mPeriodicIO.target_vertical_side = 0;
+				mPeriodicIO.get_pipeline_value = 0;
+				mPeriodicIO.camera_translation = CameraTranslation.identity;
+				mPeriodicIO.camera_to_target_pose = Pose2d.identity();
+				mPeriodicIO.target_distance = 0;
 			}
 		}
 		catch (Exception ex) {
 			ConsoleReporter.report(ex);
 		}
+		mPeriodicIO.vision_loop_time = loopTimer.hasElapsed();
 	}
 
 	@Override
 	public synchronized void writePeriodicOutputs() {
+		loopTimer.start();
 		try {
-			limelightTurret.getEntry("pipeline").setNumber(mPeriodicIO.pipelineFront);
+			pipelineEntry.setNumber(mPeriodicIO.pipeline_front);
 		}
 		catch (Exception ex) {
 			ConsoleReporter.report(ex);
@@ -213,7 +222,7 @@ public class VisionTracker extends Subsystem {
 //		NetworkTableEntry stream = mCurrentTargetingLimelightNT.getValue().getEntry("stream");
 //		NetworkTableEntry snapshot = mCurrentTargetingLimelightNT.getValue().getEntry("snapshot");
 
-		mPeriodicIO.vision_loop_time = loopTimer.hasElapsed();
+		mPeriodicIO.vision_loop_time += loopTimer.hasElapsed();
 	}
 
 	public TargetMode getTargetMode() {
@@ -256,27 +265,27 @@ public class VisionTracker extends Subsystem {
 	public static class PeriodicIO {
 		//Making members public here will automatically add them to logs
 		//Read values
-		public double targetValid;
-		public double targetHorizontalDeviation;
-		double targetVerticalDeviation;
-		public double targetArea;
-		double targetSkew;
-		double targetLatency;
-		double targetShortSide;
-		double targetLongSide;
-		double targetHorizontalSide;
-		double targetVerticalSide;
-		double targetDistance;
-		double getPipelineValue;
-		public Pose2d cameraToTargetPose;
-		public Pose2d prevCameraToTargetPose;
-		public CameraTranslation cameraTranslation;
-		double[] cameraTranslationRotationDefaultArray = new double[6];
+		public double target_valid;
+		public double target_horizontal_deviation;
+		double target_vertical_deviation;
+		public double target_area;
+		double target_skew;
+		double target_latency;
+		double target_short_side;
+		double target_long_side;
+		double target_horizontal_side;
+		double target_vertical_side;
+		double target_distance;
+		double get_pipeline_value;
+		public Pose2d camera_to_target_pose;
+		Pose2d prev_camera_to_target_pose;
+		public CameraTranslation camera_translation;
+		double[] camera_translation_rotation_default_array = new double[6];
 
-		ArrayList<Translation2d> pointArray = new ArrayList<>();
+		ArrayList<Translation2d> point_array = new ArrayList<>();
 
 		//Written values
-		int pipelineFront;
+		int pipeline_front;
 		public double vision_loop_time;
 	}
 

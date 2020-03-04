@@ -84,12 +84,12 @@ deploy {
 							"-Dcom.sun.management.jmxremote.authenticate=false",
 							"-Djava.rmi.server.hostname=${TEAMIP}",
 							"-XX:+UseG1GC",
-							"-XX:MaxGCPauseMillis=10"
+							"-XX:MaxGCPauseMillis=5"
 							]
 			} else {
 				project.logger.lifecycle('Profile mode not enabled!')
  				jvmArgs = [ "-XX:+UseG1GC",
- 							"-XX:MaxGCPauseMillis=10"
+ 							"-XX:MaxGCPauseMillis=5"
  							]
 			}
             

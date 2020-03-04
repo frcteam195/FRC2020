@@ -92,8 +92,12 @@ public class Turret extends Subsystem implements InterferenceSystem {
 
 	@Override
 	public synchronized List<Object> generateReport() {
-		return mLogDataGenerator.generateData(mPeriodicIO);
+		loopTimer.start();
+		mTmpHandle = mLogDataGenerator.generateData(mPeriodicIO);
+		mPeriodicIO.turret_loop_time += loopTimer.hasElapsed();
+		return mTmpHandle;
 	}
+	private List<Object> mTmpHandle;
 
 	@Override
 	public void zeroSensors() {
@@ -128,6 +132,7 @@ public class Turret extends Subsystem implements InterferenceSystem {
 		@SuppressWarnings("Duplicates")
 		@Override
 		public void onLoop(double timestamp) {
+			loopTimer.start();
 			synchronized (Turret.this) {
 				Pose2d robotCurrentPos = RobotState.getInstance().getLatestFieldToVehicle().getValue();
 				switch (mTurretControlMode) {
@@ -176,6 +181,7 @@ public class Turret extends Subsystem implements InterferenceSystem {
 						break;
 				}
 			}
+			mPeriodicIO.turret_loop_time += loopTimer.hasElapsed();
 		}
 
 		@Override
@@ -232,11 +238,13 @@ public class Turret extends Subsystem implements InterferenceSystem {
 		mPeriodicIO.turret_position = mTurretRotationMotor.getPosition();
 		mPeriodicIO.turret_velocity = mTurretRotationMotor.getVelocity();
 		mPeriodicIO.turret_reset = mTurretMasterHasReset.getValue();
+		mPeriodicIO.turret_loop_time = loopTimer.hasElapsed();
 	}
 
 	@Override
 	public synchronized void writePeriodicOutputs() {
-		mPeriodicIO.turret_loop_time = loopTimer.hasElapsed();
+		loopTimer.start();
+		mPeriodicIO.turret_loop_time += loopTimer.hasElapsed();
 	}
 
 	@SuppressWarnings("WeakerAccess")

@@ -70,10 +70,10 @@ public class SubsystemManager implements ILooper {
 	private void generateReport() {
 		l.clear();
 
-		l.add("Enabled");
+		l.add("enabled");
 		l.add(Boolean.toString(DriverStation.getInstance().isEnabled()));
 
-		l.add("Timestamp_Robot");
+		l.add("timestamp_robot");
 		l.add(Timer.getFPGATimestamp());
 
 //		l.add("MatchTime");
@@ -86,7 +86,7 @@ public class SubsystemManager implements ILooper {
 			ConsoleReporter.report(ex);
 		}
 
-		l.add("OverallLoopTime");
+		l.add("overall_loop_time");
 		l.add(eLoopTimer.hasElapsed());
 	}
 

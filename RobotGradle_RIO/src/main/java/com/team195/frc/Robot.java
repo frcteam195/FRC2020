@@ -144,7 +144,7 @@ public class Robot extends TimedRobot {
 	@Override
 	public void teleopInit() {
 		try {
-//			CrashTracker.logTeleopInit();
+			CrashTracker.logTeleopInit();
 			mDisabledLooper.stop();
 
 			if (mAutoModeExecutor.isSet()) {
@@ -214,7 +214,7 @@ public class Robot extends TimedRobot {
 	@Override
 	public void disabledInit() {
 		try {
-//			CrashTracker.logDisabledInit();
+			CrashTracker.logDisabledInit();
 
 			mHIDController.stop();
 			mEnabledLooper.stop();

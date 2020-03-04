@@ -57,19 +57,19 @@ public class RobotStateEstimator extends Subsystem {
 
         mObjList.clear();
 
-        mObjList.add("RobotPoseX");
+        mObjList.add("robot_pose_x");
         mObjList.add(odometry.getTranslation().x());
 
-        mObjList.add("RobotPoseY");
+        mObjList.add("robot_pose_y");
         mObjList.add(odometry.getTranslation().y());
 
-        mObjList.add("RobotPoseTheta");
+        mObjList.add("robot_pose_theta");
         mObjList.add(odometry.getRotation().getDegrees());
 
-        mObjList.add("RobotLinearVelocity");
+        mObjList.add("robot_linear_velocity");
         mObjList.add(robot_state_.getMeasuredVelocity().dx);
 
-        mObjList.add("RobotStateEstimatorLoopTime");
+        mObjList.add("robot_state_estimator_loop_time");
         mObjList.add(mPeriodicIO.robot_state_loop_time);
 
         return mObjList;

@@ -81,6 +81,7 @@ public class Drive extends Subsystem {
 
 		@Override
 		public void onLoop(double timestamp) {
+			loopTimer.start();
 			synchronized (Drive.this) {
 				switch (mDriveControlState) {
 					case OPEN_LOOP:
@@ -97,6 +98,7 @@ public class Drive extends Subsystem {
 						break;
 				}
 			}
+			mPeriodicIO.drive_loop_time += loopTimer.hasElapsed();
 		}
 
 		@Override
@@ -438,6 +440,8 @@ public class Drive extends Subsystem {
 		if (mCSVWriter != null) {
 			mCSVWriter.add(mPeriodicIO);
 		}
+
+		mPeriodicIO.drive_loop_time = loopTimer.hasElapsed();
 	}
 
 	private double getFilteredVelocity(double requestedVelocity, double currentVelocity) {
@@ -446,6 +450,7 @@ public class Drive extends Subsystem {
 
 	@Override
 	public synchronized void writePeriodicOutputs() {
+		loopTimer.start();
 		if (mDriveControlState == DriveControlState.VELOCITY) {
 			mLeftMaster.set(MCControlMode.Velocity, getFilteredVelocity(mPeriodicIO.left_demand, mPeriodicIO.left_velocity_RPM), 0, 0.0);
 			mRightMaster.set(MCControlMode.Velocity, getFilteredVelocity(mPeriodicIO.right_demand, mPeriodicIO.right_velocity_RPM), 0, 0.0);
@@ -476,7 +481,7 @@ public class Drive extends Subsystem {
 			if (mForceBrakeUpdate.get())
 				mForceBrakeUpdate.set(false);
 		}
-		mPeriodicIO.drive_loop_time = loopTimer.hasElapsed();
+		mPeriodicIO.drive_loop_time += loopTimer.hasElapsed();
 	}
 
 	@Override
@@ -577,8 +582,12 @@ public class Drive extends Subsystem {
 
 	@Override
 	public synchronized List<Object> generateReport() {
-		return mLogDataGenerator.generateData(mPeriodicIO);
+		loopTimer.start();
+		mTmpHandle = mLogDataGenerator.generateData(mPeriodicIO);
+		mPeriodicIO.drive_loop_time += loopTimer.hasElapsed();
+		return mTmpHandle;
 	}
+	private List<Object> mTmpHandle;
 
 	@Override
 	public synchronized boolean isSystemFaulted() {

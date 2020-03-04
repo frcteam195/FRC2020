@@ -65,9 +65,13 @@ public class ControlPanelManipulator extends Subsystem {
 	}
 
 	@Override
-	public List<Object> generateReport() {
-		return mLogDataGenerator.generateData(mPeriodicIO);
+	public synchronized List<Object> generateReport() {
+		loopTimer.start();
+		mTmpHandle = mLogDataGenerator.generateData(mPeriodicIO);
+		mPeriodicIO.cpm_loop_time += loopTimer.hasElapsed();
+		return mTmpHandle;
 	}
+	private List<Object> mTmpHandle;
 
 	public synchronized void setCPMPosition(double cpmPosition) {
 		mPeriodicIO.cpm_position = cpmPosition;
@@ -104,6 +108,7 @@ public class ControlPanelManipulator extends Subsystem {
 		@SuppressWarnings("Duplicates")
 		@Override
 		public void onLoop(double timestamp) {
+			loopTimer.start();
 			synchronized (ControlPanelManipulator.this) {
 				switch (mCPMControlMode) {
 					case POSITION:
@@ -114,6 +119,7 @@ public class ControlPanelManipulator extends Subsystem {
 						break;
 				}
 			}
+			mPeriodicIO.cpm_loop_time += loopTimer.hasElapsed();
 		}
 
 		@Override
@@ -140,11 +146,13 @@ public class ControlPanelManipulator extends Subsystem {
 		mPeriodicIO.cpm_velocity = mCPMRotationMotor.getVelocity();
 		mPeriodicIO.cpm_reset = mCPMHasReset.getValue();
 		mPeriodicIO.cpm_current_color = mColorSensor.getColor();
+		mPeriodicIO.cpm_loop_time = loopTimer.hasElapsed();
 	}
 
 	@Override
 	public synchronized void writePeriodicOutputs() {
-		mPeriodicIO.cpm_loop_time = loopTimer.hasElapsed();
+		loopTimer.start();
+		mPeriodicIO.cpm_loop_time += loopTimer.hasElapsed();
 	}
 
 	@SuppressWarnings("WeakerAccess")
