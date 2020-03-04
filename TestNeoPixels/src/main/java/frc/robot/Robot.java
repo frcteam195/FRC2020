@@ -37,7 +37,7 @@ public class Robot extends TimedRobot {
 //			mNeoPixels.floatPixel(mYellowPixel);
 //		}
 
-		mNeoPixels.processFadeWithSyncPixel(mFloatingPixel, 4, true);
+		mNeoPixels.processFadeWithSyncPixel(mFloatingPixel, 2, true);
 		mNeoPixels.set(true);
 		double loopTime = mLEDTimer.hasElapsed();
 		System.out.println("Loop Time: " + loopTime);

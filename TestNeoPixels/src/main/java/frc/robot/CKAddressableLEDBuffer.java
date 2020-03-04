@@ -65,8 +65,8 @@ public class CKAddressableLEDBuffer extends AddressableLEDBuffer {
 		if (m_bufferHandle != null) {
 			//Fast Implementation if access to private handle succeeded
 			setRGB(0, r, g, b);
-			for (int i = 4; i < mStripLength; i += i) {
-				System.arraycopy(m_bufferHandle, 0, m_bufferHandle, i, ((mStripLength - i) < i) ? (mStripLength - i) : i);
+			for (int i = 4; i < m_bufferHandle.length; i += i) {
+				System.arraycopy(m_bufferHandle, 0, m_bufferHandle, i, ((m_bufferHandle.length - i) < i) ? (m_bufferHandle.length - i) : i);
 			}
 		} else {
 			for (int i = 0; i < mStripLength; i++) {

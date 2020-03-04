@@ -12,7 +12,7 @@ public class LEDDriverNeoPixel implements LEDDriver{
 
 	public LEDDriverNeoPixel(AddressableLED led, int ledCount) {
 		mLED = led;
-		mNeoPixelBuffer = new CKAddressableLEDBuffer(ledCount);
+		mNeoPixelBuffer = new CKAddressableLEDBuffer(ledCount, 0.4f, 0.9f, 0.014f);
 		mNeoPixelOffBuffer = new CKAddressableLEDBuffer(ledCount);
 		mLED.setLength(mNeoPixelBuffer.getLength());
 		mLED.start();
