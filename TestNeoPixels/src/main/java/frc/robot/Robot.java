@@ -6,35 +6,38 @@ import edu.wpi.first.wpilibj.TimedRobot;
 public class Robot extends TimedRobot {
 	private static final int kNeoPixelCount = 20;
 	private static final int kNeoPixelPWMPort = 0;
+	private static final RGBColor kDefaultRobotColor = new RGBColor(210, 0, 120);
+	private static final RGBColor kGamePieceColor = new RGBColor(255, 127, 0);
 
 	LEDDriverNeoPixel mNeoPixels;
-	FloatingPixel mYellowPixel;
+	FloatingPixel mFloatingPixel;
 
-	TimeoutTimer mPixelUpdate = new TimeoutTimer(0.02);
+//	TimeoutTimer mPixelUpdate = new TimeoutTimer(0.02);
 	ElapsedTimer mLEDTimer = new ElapsedTimer();
 
 	@Override
 	public void robotInit() {
 		mNeoPixels = new LEDDriverNeoPixel(new AddressableLED(kNeoPixelPWMPort), kNeoPixelCount);
-		mYellowPixel = new FloatingPixel(new RGBColor(255, 127, 0), mNeoPixels.getLength());
-		mNeoPixels.setLEDColor(210, 0, 120);
+		mFloatingPixel = new FloatingPixel(kGamePieceColor, mNeoPixels.getLength());
+		mNeoPixels.setLEDColor(kDefaultRobotColor);
 		mNeoPixels.set(true);
-		mPixelUpdate.reset();
+//		mPixelUpdate.reset();
 	}
 
 	@Override
 	public void robotPeriodic() {
 		mLEDTimer.start();
-		mNeoPixels.processFade();
+//		mNeoPixels.processFade();
+//
+//		if (mPixelUpdate.isTimedOut()) {
+//			mNeoPixels.floatPixelFwd(mYellowPixel);
+//			mYellowPixel.reset();
+//			mPixelUpdate.reset();
+//		} else {
+//			mNeoPixels.floatPixel(mYellowPixel);
+//		}
 
-		if (mPixelUpdate.isTimedOut()) {
-			mNeoPixels.floatPixelFwd(mYellowPixel);
-			mYellowPixel.reset();
-			mPixelUpdate.reset();
-		} else {
-			mNeoPixels.floatPixel(mYellowPixel);
-		}
-
+		mNeoPixels.processFadeWithSyncPixel(mFloatingPixel, 4, true);
 		mNeoPixels.set(true);
 		double loopTime = mLEDTimer.hasElapsed();
 		System.out.println("Loop Time: " + loopTime);

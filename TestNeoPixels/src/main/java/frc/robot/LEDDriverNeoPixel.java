@@ -35,6 +35,10 @@ public class LEDDriverNeoPixel implements LEDDriver{
 		mNeoPixelBuffer.stepFade();
 	}
 
+	public synchronized void processFadeWithSyncPixel(FloatingPixel f, int pixelRateDivisor, boolean forward) {
+		mNeoPixelBuffer.stepFadeWithSyncPixel(f, pixelRateDivisor, forward);
+	}
+
 	public synchronized void floatPixel(FloatingPixel f) {
 		mNeoPixelBuffer.processFloatingPixel(f);
 	}
