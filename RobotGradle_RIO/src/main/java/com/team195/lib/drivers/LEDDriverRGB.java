@@ -78,6 +78,7 @@ public class LEDDriverRGB implements LEDDriver{
 	@Override
 	public void processFadeWithSyncPixel(FloatingPixel f, int pixelRateDivisor, boolean forward, boolean startPixelWhenDim) {
 		//Not supported
+		processFade();
 	}
 
 	public synchronized void setLEDColor(int redPWMOut, int greenPWMOut, int bluePWMOut) {

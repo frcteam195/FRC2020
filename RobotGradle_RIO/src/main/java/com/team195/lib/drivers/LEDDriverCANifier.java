@@ -76,5 +76,6 @@ public class LEDDriverCANifier implements LEDDriver {
 	@Override
 	public void processFadeWithSyncPixel(FloatingPixel f, int pixelRateDivisor, boolean forward, boolean startPixelWhenDim) {
 		//Not supported
+		processFade();
 	}
 }
