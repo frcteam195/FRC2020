@@ -31,7 +31,7 @@ public class LEDController extends Thread {
     private SystemState mSystemState = SystemState.OFF;
     private LEDState mRequestedState = LEDState.OFF;
     private boolean mIsLEDOn;
-    private final LEDDriverNeoPixel mLED;
+    private final LEDDriver mLED;
     private final LEDDriver mStaticLED;
     private boolean runThread = true;
     private double mCurrentStateStartTime;

@@ -6,7 +6,7 @@ import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.DigitalOutput;
 
-public class LEDDriverNeoPixel implements LEDDriver{
+public class LEDDriverNeoPixel implements LEDDriver {
 	private final AddressableLED mLED;
 	private final CKAddressableLEDBuffer mNeoPixelBuffer;
 	private final CKAddressableLEDBuffer mNeoPixelOffBuffer;
@@ -22,6 +22,7 @@ public class LEDDriverNeoPixel implements LEDDriver{
 		mLED.start();
 	}
 
+	@Override
 	public synchronized void set(boolean on) {
 		if (on) {
 			mLED.setData(mNeoPixelBuffer);
@@ -31,14 +32,16 @@ public class LEDDriverNeoPixel implements LEDDriver{
 		this.on = on;
 	}
 
-	public synchronized int getLength() {
-		return mNeoPixelBuffer.getLength();
-	}
+//	public synchronized int getLength() {
+//		return mNeoPixelBuffer.getLength();
+//	}
 
+	@Override
 	public synchronized void processFade() {
 		mNeoPixelBuffer.stepFade();
 	}
 
+	@Override
 	public synchronized void processFadeWithSyncPixel(FloatingPixel f, int pixelRateDivisor, boolean forward, boolean startPixelWhenDim) {
 		mNeoPixelBuffer.stepFadeWithSyncPixel(f, pixelRateDivisor, forward, startPixelWhenDim);
 	}
@@ -55,6 +58,7 @@ public class LEDDriverNeoPixel implements LEDDriver{
 		mNeoPixelBuffer.processFloatingPixelBackward(f);
 	}
 
+	@Override
 	public synchronized void setLEDColor(RGBColor rgbColor) {
 		setLEDColor(rgbColor.red, rgbColor.green, rgbColor.blue);
 	}
