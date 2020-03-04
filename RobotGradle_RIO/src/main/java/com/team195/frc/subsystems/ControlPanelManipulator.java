@@ -139,7 +139,7 @@ public class ControlPanelManipulator extends Subsystem {
 		mPeriodicIO.cpm_position = mCPMRotationMotor.getPosition();
 		mPeriodicIO.cpm_velocity = mCPMRotationMotor.getVelocity();
 		mPeriodicIO.cpm_reset = mCPMHasReset.getValue();
-		mPeriodicIO.cpm_current_color = mColorSensor.getColorOutput();
+		mPeriodicIO.cpm_current_color = mColorSensor.getColor();
 	}
 
 	@Override

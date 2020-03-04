@@ -11,7 +11,7 @@ public class Constants {
 
     public static final int kCANTimeoutMs = 10; //use for on the fly updates
     public static final int kLongCANTimeoutMs = 100; //use for constructors
-    public static final int kTalonRetryCount = 3; //use for constructors
+    public static final int kTalonRetryCount = 1; //use for constructors
 
     // Control Board
     public static final boolean kUseGamepadForDriving = false;
@@ -50,11 +50,12 @@ public class Constants {
     public static final boolean REPORT_TO_DRIVERSTATION_INSTEAD_OF_CONSOLE = false;
 
     public static final RGBColor kDefaultColor = new RGBColor(210, 0, 120);  //Default purple color
+    public static final RGBColor kDefaultGlowColor = new RGBColor(210, 0, 120);  //Default purple color
     public static final RGBColor kCommLossColor = new RGBColor(255, 0, 0);
     public static final RGBColor kRequestGamePieceColor = new RGBColor(0, 255, 0);
     public static final RGBColor kGotGamePieceColor = new RGBColor(0, 0, 255);
-    public static final RGBColor kGamePieceColor = new RGBColor(223, 223, 62);
-    public static final int kNumberOfNeoPixels = 60;
+    public static final RGBColor kGamePieceColor = new RGBColor(255, 127, 0);
+    public static final int kNumberOfNeoPixels = 20;
 
     public static final int kActionTimeoutS = 30;
 

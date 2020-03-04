@@ -5,12 +5,10 @@ import com.team195.frc.constants.Constants;
 import com.team195.frc.constants.DeviceIDConstants;
 import com.team195.frc.reporters.ConsoleReporter;
 import com.team195.frc.reporters.MessageLevel;
-import com.team195.lib.drivers.CKAddressableLEDBuffer;
+import com.team195.lib.drivers.*;
 import com.team195.lib.util.MorseCodeTranslator;
 import com.team195.lib.util.RGBColor;
 import com.team195.lib.util.ThreadRateControl;
-import com.team195.lib.drivers.LEDDriver;
-import com.team195.lib.drivers.LEDDriverCANifier;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.Timer;
@@ -29,11 +27,12 @@ public class LEDController extends Thread {
 	private static final double kWordPause = 0.75;
 
 	private static LEDController instance = null;
-    private LEDState mDefaultState = LEDState.FIXED_ON;
+    private LEDState mDefaultState = LEDState.FADE;
     private SystemState mSystemState = SystemState.OFF;
     private LEDState mRequestedState = LEDState.OFF;
     private boolean mIsLEDOn;
-    private LEDDriver mLED;
+    private final LEDDriverNeoPixel mLED;
+    private final LEDDriver mStaticLED;
     private boolean runThread = true;
     private double mCurrentStateStartTime;
     private double mBlinkDuration;
@@ -50,15 +49,23 @@ public class LEDController extends Thread {
     private String mPrevMessage = "";
     private boolean loopMsg = false;
 
+    private final FloatingPixel mFloatingPixel;
+
 
     private LEDController() throws Exception {
     	super();
 		super.setPriority(Constants.kLEDThreadPriority);
-        mLED = new LEDDriverCANifier(new CANifier(DeviceIDConstants.kCANifierLEDId));
+        mLED = new LEDDriverNeoPixel(new AddressableLED(DeviceIDConstants.kNeoPixelPWMPort), Constants.kNumberOfNeoPixels);
         mLED.set(false);
 
+	    mFloatingPixel = new FloatingPixel(Constants.kGamePieceColor, Constants.kNumberOfNeoPixels);
 
-        // Force a relay change.
+        mStaticLED = new LEDDriverCANifier(new CANifier(DeviceIDConstants.kCANifierLEDId));
+	    mStaticLED.setLEDColor(Constants.kDefaultGlowColor);
+	    mStaticLED.set(false);
+
+
+	    // Force a relay change.
         mIsLEDOn = true;
         setLEDOff();
 
@@ -113,6 +120,12 @@ public class LEDController extends Thread {
 					case MORSE:
 						newState = handleMorse();
 						break;
+					case FADING:
+						newState = handleFade();
+						break;
+					case FADING_PIXEL:
+						newState = handleFadePixel();
+						break;
 					default:
 						ConsoleReporter.report("Fell through on LEDController states!!", MessageLevel.ERROR);
 						newState = SystemState.OFF;
@@ -137,6 +150,10 @@ public class LEDController extends Thread {
                 return SystemState.FIXED_ON;
 			case MORSE:
 				return SystemState.MORSE;
+	        case FADE:
+	        	return SystemState.FADING;
+	        case FADE_PIXEL:
+	        	return SystemState.FADING_PIXEL;
             default:
                 return SystemState.OFF;
         }
@@ -151,6 +168,18 @@ public class LEDController extends Thread {
         setLEDOn();
         return defaultStateTransfer();
     }
+
+	private synchronized SystemState handleFade() {
+		mLED.processFade();
+    	setLEDOn();
+		return defaultStateTransfer();
+	}
+
+	private synchronized SystemState handleFadePixel() {
+		mLED.processFadeWithSyncPixel(mFloatingPixel, 1, true, false);
+		setLEDOn();
+		return defaultStateTransfer();
+	}
 
     private synchronized SystemState handleBlinking(double timeInState) {
         if (timeInState > mTotalBlinkDuration) {
@@ -266,7 +295,7 @@ public class LEDController extends Thread {
 	}
 
     private synchronized void setLEDOn() {
-        if (!mIsLEDOn) {
+        if (!mIsLEDOn || mSystemState == SystemState.FADING || mSystemState == SystemState.FADING_PIXEL) {
             mIsLEDOn = true;
             mLED.set(true);
         }
@@ -328,7 +357,7 @@ public class LEDController extends Thread {
 
     // Internal state of the system
     private enum SystemState {
-        OFF, FIXED_ON, BLINKING, MORSE
+        OFF, FIXED_ON, BLINKING, MORSE, FADING, FADING_PIXEL
     }
 
     private enum MorseState {
@@ -336,6 +365,6 @@ public class LEDController extends Thread {
 	}
 
     public enum LEDState {
-        OFF, FIXED_ON, BLINK, MORSE
+        OFF, FIXED_ON, BLINK, MORSE, FADE, FADE_PIXEL
     }
 }

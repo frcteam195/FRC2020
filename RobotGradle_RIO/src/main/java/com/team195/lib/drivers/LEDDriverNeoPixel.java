@@ -16,9 +16,10 @@ public class LEDDriverNeoPixel implements LEDDriver{
 
 	public LEDDriverNeoPixel(AddressableLED led, int ledCount) {
 		mLED = led;
-		mNeoPixelBuffer = new CKAddressableLEDBuffer(ledCount);
+		mNeoPixelBuffer = new CKAddressableLEDBuffer(ledCount, 0.35f, 0.9f, 0.032f);
 		mNeoPixelOffBuffer = new CKAddressableLEDBuffer(ledCount);
 		mLED.setLength(mNeoPixelBuffer.getLength());
+		mLED.start();
 	}
 
 	public synchronized void set(boolean on) {
@@ -30,8 +31,20 @@ public class LEDDriverNeoPixel implements LEDDriver{
 		this.on = on;
 	}
 
+	public synchronized int getLength() {
+		return mNeoPixelBuffer.getLength();
+	}
+
 	public synchronized void processFade() {
 		mNeoPixelBuffer.stepFade();
+	}
+
+	public synchronized void processFadeWithSyncPixel(FloatingPixel f, int pixelRateDivisor, boolean forward, boolean startPixelWhenDim) {
+		mNeoPixelBuffer.stepFadeWithSyncPixel(f, pixelRateDivisor, forward, startPixelWhenDim);
+	}
+
+	public synchronized void floatPixel(FloatingPixel f) {
+		mNeoPixelBuffer.processFloatingPixel(f);
 	}
 
 	public synchronized void floatPixelFwd(FloatingPixel f) {
