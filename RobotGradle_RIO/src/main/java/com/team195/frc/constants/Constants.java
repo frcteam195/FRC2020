@@ -53,6 +53,8 @@ public class Constants {
     public static final RGBColor kCommLossColor = new RGBColor(255, 0, 0);
     public static final RGBColor kRequestGamePieceColor = new RGBColor(0, 255, 0);
     public static final RGBColor kGotGamePieceColor = new RGBColor(0, 0, 255);
+    public static final RGBColor kGamePieceColor = new RGBColor(223, 223, 62);
+    public static final int kNumberOfNeoPixels = 60;
 
     public static final int kActionTimeoutS = 30;
 

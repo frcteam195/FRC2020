@@ -33,4 +33,5 @@ public class DeviceIDConstants {
 	public static final int kControlPanelExtenderSolenoid = 0;
 
 	public static final int kCANifierLEDId = 30;
+	public static final int kNeoPixelPWMPort = 0;
 }

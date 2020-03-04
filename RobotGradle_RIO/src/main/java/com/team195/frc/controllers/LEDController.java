@@ -5,11 +5,14 @@ import com.team195.frc.constants.Constants;
 import com.team195.frc.constants.DeviceIDConstants;
 import com.team195.frc.reporters.ConsoleReporter;
 import com.team195.frc.reporters.MessageLevel;
+import com.team195.lib.drivers.CKAddressableLEDBuffer;
 import com.team195.lib.util.MorseCodeTranslator;
 import com.team195.lib.util.RGBColor;
 import com.team195.lib.util.ThreadRateControl;
 import com.team195.lib.drivers.LEDDriver;
 import com.team195.lib.drivers.LEDDriverCANifier;
+import edu.wpi.first.wpilibj.AddressableLED;
+import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.Timer;
 
 import java.util.Arrays;
@@ -47,11 +50,13 @@ public class LEDController extends Thread {
     private String mPrevMessage = "";
     private boolean loopMsg = false;
 
+
     private LEDController() throws Exception {
     	super();
 		super.setPriority(Constants.kLEDThreadPriority);
         mLED = new LEDDriverCANifier(new CANifier(DeviceIDConstants.kCANifierLEDId));
         mLED.set(false);
+
 
         // Force a relay change.
         mIsLEDOn = true;

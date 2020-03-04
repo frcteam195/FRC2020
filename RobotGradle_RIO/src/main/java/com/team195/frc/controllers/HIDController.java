@@ -26,10 +26,10 @@ public class HIDController {
 
 	private static final boolean USE_CHEESY_DRIVE = true;
 
-	private final CKDashJoystick driveJoystick = Controllers.getInstance().getDriveJoystick();
-	private final CKDashJoystick armControlJoystick = Controllers.getInstance().getArmControlJoystick();
-	private final CKDashJoystick buttonBox1 = Controllers.getInstance().getButtonBox1();
-	private final CKDashJoystick buttonBox2 = Controllers.getInstance().getButtonBox2();
+	private final CKDashJoystick driveJoystick = new CKDashJoystick(0);
+	private final CKDashJoystick armControlJoystick = new CKDashJoystick(1);
+	private final CKDashJoystick buttonBox1 = new CKDashJoystick(2);
+	private final CKDashJoystick buttonBox2 = new CKDashJoystick(3);
 
 	private final Object taskRunningLock_ = new Object();
 
