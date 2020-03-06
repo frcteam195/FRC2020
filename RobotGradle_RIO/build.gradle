@@ -209,7 +209,7 @@ task deployRIOIPKs {
 				execute 'sudo mkdir -p /tmp/ipks'
 				put from: fileTree(dir: 'ipks/'), into: '/tmp/ipks'
  				execute 'sudo chmod -R 777 /tmp/ipks'
- 				execute 'cd /tmp/ipks && for f in *.ipk; do sudo opkg install "$f"; done'
+ 				execute 'cd /tmp/ipks && for f in *.ipk; do sudo opkg install "$f" --force-overwrite; done'
  				execute 'sudo rm -Rf /tmp/ipks'
  				execute 'sudo sync'
 			}
