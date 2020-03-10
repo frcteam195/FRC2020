@@ -53,7 +53,7 @@ public class DriveControls {
 		public void runCrashTracked() {
 			synchronized (taskRunningLock_) {
 				if (firstRun) {
-					Thread.currentThread().setName("HIDController");
+					Thread.currentThread().setName("DriveControls");
 					Thread.currentThread().setPriority(Constants.kControllerThreadPriority);
 					firstRun = false;
 				}
