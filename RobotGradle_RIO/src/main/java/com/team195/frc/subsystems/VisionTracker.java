@@ -177,42 +177,15 @@ public class VisionTracker extends Subsystem {
 				mPeriodicIO.target_area = mCurrentTargetingLimelightNT.getEntry("ta").getDouble(0);
 				mPeriodicIO.target_skew = mCurrentTargetingLimelightNT.getEntry("ts").getDouble(0);
 				mPeriodicIO.target_latency = mCurrentTargetingLimelightNT.getEntry("tl").getDouble(0);
-				mPeriodicIO.target_short_side = mCurrentTargetingLimelightNT.getEntry("tshort").getDouble(0);
-				mPeriodicIO.target_long_side = mCurrentTargetingLimelightNT.getEntry("tlong").getDouble(0);
-				mPeriodicIO.target_horizontal_side = mCurrentTargetingLimelightNT.getEntry("thor").getDouble(0);
-				mPeriodicIO.target_vertical_side = mCurrentTargetingLimelightNT.getEntry("tvert").getDouble(0);
-				mPeriodicIO.get_pipeline_value = mCurrentTargetingLimelightNT.getEntry("getpipe").getDouble(0);
-//				mPeriodicIO.camera_translation = new CameraTranslation(mCurrentTargetingLimelightNT.getEntry("camtran").getDoubleArray(mPeriodicIO.camera_translation_rotation_default_array));
-//				mPeriodicIO.camera_to_target_pose = new Pose2d(new Translation2d(mPeriodicIO.camera_translation.x, mPeriodicIO.camera_translation.y), Rotation2d.fromDegrees(mPeriodicIO.camera_translation.yaw));
-//				if (!mPeriodicIO.camera_to_target_pose.equals(mPeriodicIO.prev_camera_to_target_pose)) {
-////					Pose2d targetToCamera = mPeriodicIO.cameraToTargetPose.inverse();
-////					Pose2d cameraToTurret = CalConstants.kTurretToCamera.inverse();
-////					Pose2d targetToTurret = targetToCamera.transformBy(cameraToTurret);
-////					Pose2d turretToVehicle = CalConstants.kVehicleToTurret.inverse();
-////					Pose2d targetToVehicle = targetToTurret.transformBy(turretToVehicle);
-////					Pose2d fieldToVehicle = TargetingConstants.fieldToOuterTarget.transformBy(targetToVehicle);
-////					RobotState.getInstance().addFieldToVehicleObservation(Timer.getFPGATimestamp(), fieldToVehicle);
-//					Pose2d latestAbsoluteFieldToVehicle = TargetingConstants.fieldToOuterTarget.transformBy(
-//							mPeriodicIO.camera_to_target_pose.inverse()    //May want to use robot angle here instead of angle from Camera pose
-//							.transformBy(CalConstants.kTurretToCamera.inverse())
-//							.transformBy(Turret.getInstance().getLatestVehicleToTurretPose().inverse())
-//					);
-//					RobotState.getInstance().addFieldToVehicleObservation(Timer.getFPGATimestamp(), latestAbsoluteFieldToVehicle);
-//					mPeriodicIO.prev_camera_to_target_pose = mPeriodicIO.camera_to_target_pose;
-//				}
 
 				if (mPeriodicIO.target_valid > 0) {
+					Translation2d cameraToTargetTranslation = getCameraToTargetTranslation();
 					mPeriodicIO.camera_to_target_pose = TargetingConstants.fieldToOuterTarget.transformBy(
-							new Pose2d(getCameraToTargetTranslation().translateBy(CalConstants.kTurretToCamera.inverse().getTranslation()), Turret.getInstance().getLatestFieldToTurretPose().getRotation()).inverse()
+							new Pose2d(cameraToTargetTranslation.translateBy(CalConstants.kTurretToCamera.inverse().getTranslation()), Turret.getInstance().getLatestFieldToTurretPose().getRotation()).inverse()
 									.transformBy(Turret.getInstance().getLatestVehicleToTurretPose().inverse())
 					);
 					RobotState.getInstance().addFieldToVehicleObservation(Timer.getFPGATimestamp(), mPeriodicIO.camera_to_target_pose);
-
-					//No differential updates for now
-//					if (!mPeriodicIO.camera_to_target_pose.equals(mPeriodicIO.prev_camera_to_target_pose)) {
-//						RobotState.getInstance().addFieldToVehicleObservation(Timer.getFPGATimestamp(), mPeriodicIO.camera_to_target_pose);
-//						mPeriodicIO.prev_camera_to_target_pose = mPeriodicIO.camera_to_target_pose;
-//					}
+					mPeriodicIO.target_distance = cameraToTargetTranslation.distance(Translation2d.identity());
 				}
 			}
 			else {
@@ -222,12 +195,6 @@ public class VisionTracker extends Subsystem {
 				mPeriodicIO.target_area = 0;
 				mPeriodicIO.target_skew = 0;
 				mPeriodicIO.target_latency = 0;
-				mPeriodicIO.target_short_side = 0;
-				mPeriodicIO.target_long_side = 0;
-				mPeriodicIO.target_horizontal_side = 0;
-				mPeriodicIO.target_vertical_side = 0;
-				mPeriodicIO.get_pipeline_value = 0;
-				mPeriodicIO.camera_translation = CameraTranslation.identity;
 				mPeriodicIO.camera_to_target_pose = Pose2d.identity();
 				mPeriodicIO.target_distance = 0;
 			}
@@ -248,48 +215,7 @@ public class VisionTracker extends Subsystem {
 			ConsoleReporter.report(ex);
 		}
 
-//		NetworkTableEntry ledMode = mCurrentTargetingLimelightNT.getValue().getEntry("ledMode");
-//		NetworkTableEntry camMode = mCurrentTargetingLimelightNT.getValue().getEntry("camMode");
-//		NetworkTableEntry stream = mCurrentTargetingLimelightNT.getValue().getEntry("stream");
-//		NetworkTableEntry snapshot = mCurrentTargetingLimelightNT.getValue().getEntry("snapshot");
-
 		mPeriodicIO.vision_loop_time += loopTimer.hasElapsed();
-	}
-
-	public TargetMode getTargetMode() {
-		return mTargetMode;
-	}
-
-	public static class CameraTranslation {
-		public final double x;
-		public final double y;
-		public final double z;
-		public final double pitch;
-		public final double yaw;
-		public final double roll;
-		public static final CameraTranslation identity = new CameraTranslation(new double[6]);
-		CameraTranslation(double[] inputData) {
-			if (inputData.length == 6) {
-				x = inputData[0];
-				y = inputData[1];
-				z = inputData[2];
-				pitch = inputData[3];
-				yaw = inputData[4];
-				roll = inputData[5];
-			} else {
-				x = 0;
-				y = 0;
-				z = 0;
-				pitch = 0;
-				yaw = 0;
-				roll = 0;
-			}
-		}
-
-		@Override
-		public String toString() {
-			return "(x: " + x + ", y: " + y + ", theta: " + yaw + ")";
-		}
 	}
 
 	@SuppressWarnings("WeakerAccess")
@@ -302,18 +228,8 @@ public class VisionTracker extends Subsystem {
 		public double target_area;
 		double target_skew;
 		double target_latency;
-		double target_short_side;
-		double target_long_side;
-		double target_horizontal_side;
-		double target_vertical_side;
 		double target_distance;
-		double get_pipeline_value;
 		public Pose2d camera_to_target_pose;
-		Pose2d prev_camera_to_target_pose;
-		public CameraTranslation camera_translation;
-		double[] camera_translation_rotation_default_array = new double[6];
-
-		ArrayList<Translation2d> point_array = new ArrayList<>();
 
 		//Written values
 		int pipeline_front;

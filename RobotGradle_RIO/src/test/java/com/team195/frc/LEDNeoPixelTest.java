@@ -16,10 +16,10 @@ public class LEDNeoPixelTest {
 	@Test
 	public void ledFadeTest() {
 		CKAddressableLEDBuffer ledBuffer = new CKAddressableLEDBuffer(20, 0.2f, 0.99f, 0.01f);
-		ledBuffer.flood(210, 0, 120);
-		for (int i = 0; i < 200; i++) {
-			ledBuffer.stepFade();
-			System.out.println(String.format("0x%08X", ledBuffer.getRGB(0)));
-		}
+//		ledBuffer.flood(210, 0, 120);
+//		for (int i = 0; i < 200; i++) {
+//			ledBuffer.stepFade();
+//			System.out.println(String.format("0x%08X", ledBuffer.getRGB(0)));
+//		}
 	}
 }

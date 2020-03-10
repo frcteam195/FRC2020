@@ -15,7 +15,6 @@ import com.team195.lib.drivers.CKIMU;
 import com.team195.lib.drivers.NavX;
 import com.team195.lib.drivers.motorcontrol.*;
 import com.team195.lib.util.CachedValue;
-import com.team195.lib.util.DriveHelper;
 import com.team195.lib.util.ElapsedTimer;
 import com.team195.lib.util.MotorDiagnostics;
 import com.team254.lib.geometry.Pose2d;
@@ -51,12 +50,11 @@ public class Drive extends Subsystem {
 	private AtomicBoolean mIsBrakeMode = new AtomicBoolean(false);
 	private AtomicBoolean mForceBrakeUpdate = new AtomicBoolean(false);
 	private boolean mPrevBrakeMode;
-	private double mMaxAccel = 200; //Units in inches / sec^2
-	private double mMaxDecel= 200; //Units in inches / sec^2
 
 	private final CachedValue<Boolean> mGyroPresent;
 
 	private final ElapsedTimer loopTimer = new ElapsedTimer();
+	private final ElapsedTimer driveLoopTimer = new ElapsedTimer();
 
 	private final Loop mLoop = new Loop() {
 		@Override
@@ -70,6 +68,7 @@ public class Drive extends Subsystem {
 		public void onStart(double timestamp) {
 			synchronized (Drive.this) {
 				setOpenLoop(DriveSignal.NEUTRAL);
+				driveLoopTimer.start();
 				if (mDriveControlState == DriveControlState.OPEN_LOOP) {
 					setBrakeMode(false);
 				}
@@ -407,6 +406,15 @@ public class Drive extends Subsystem {
 		mRightMaster.writeToFlash();
 	}
 
+	private double getFilteredVelocity(double requestedVelocity, double currentVelocity) {
+		double diffErr = requestedVelocity - currentVelocity;
+		if (CalConstants.kDriveMaxAccel == 0)
+			return requestedVelocity;
+		double outputVel = currentVelocity + Math.min(Math.abs(diffErr), (CalConstants.kDriveMaxAccel * driveLoopTimer.hasElapsed())) * Math.copySign(1.0, diffErr);
+		driveLoopTimer.start();
+		return outputVel;
+	}
+
 	@Override
 	public synchronized void readPeriodicInputs() {
 		loopTimer.start();
@@ -423,10 +431,6 @@ public class Drive extends Subsystem {
 		mPeriodicIO.gyro_present = mGyroPresent.getValue();
 		mPeriodicIO.left_bus_voltage = mLeftMaster.getMCInputVoltage();
 		mPeriodicIO.right_bus_voltage = mRightMaster.getMCInputVoltage();
-
-
-
-
 
 		mPeriodicIO.delta_left_rotations = (mPeriodicIO.left_position_rotations - mPeriodicIO.prev_left_rotations) * Math.PI;
 		if (mPeriodicIO.delta_left_rotations > 0.0) {
@@ -447,10 +451,6 @@ public class Drive extends Subsystem {
 		}
 
 		mPeriodicIO.drive_loop_time = loopTimer.hasElapsed();
-	}
-
-	private double getFilteredVelocity(double requestedVelocity, double currentVelocity) {
-		return DriveHelper.velocityMaxAccelDecelFilter(requestedVelocity, currentVelocity, mMaxAccel, mMaxDecel, mPeriodicIO.drive_loop_time);
 	}
 
 	@Override
@@ -575,10 +575,6 @@ public class Drive extends Subsystem {
 		}
 		else
 			return true;
-	}
-
-	public synchronized void setMaxAccel (double maxAccelIPS) {
-		mMaxAccel = maxAccelIPS;
 	}
 
 	public void forceBrakeModeUpdate() {

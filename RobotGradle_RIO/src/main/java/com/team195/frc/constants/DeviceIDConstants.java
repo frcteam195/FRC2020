@@ -22,6 +22,10 @@ public class DeviceIDConstants {
 	// Control Panel Manipulator
 	public static final int kCPMRotationId = 13;
 
+	//Climber
+	public static final int kClimberWinchMotor = 14;
+	public static final int kClimberArmMotor = 15;
+
 
 
 	//Turret
@@ -29,6 +33,10 @@ public class DeviceIDConstants {
 	public static final int kHoodMotorId = 9;
 	public static final int kLeftShooterMotorId = 10;
 	public static final int kRightShooterMotorId = 11;
+
+	//Intake Feeder
+	public static final int kFeederMotorId = 7;
+	public static final int kIntakeMotorId = 12;
 
 
 	// Solenoids

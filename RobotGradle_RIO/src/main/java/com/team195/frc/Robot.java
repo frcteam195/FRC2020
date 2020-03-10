@@ -4,7 +4,7 @@ import com.team195.frc.auto.AutoModeExecutor;
 import com.team195.frc.auto.autonomy.AutomatedActions;
 import com.team195.frc.constants.Constants;
 import com.team195.frc.constants.TestConstants;
-import com.team195.frc.controllers.HIDController;
+import com.team195.frc.controllers.DriveControls;
 import com.team195.frc.controllers.LEDController;
 import com.team195.frc.loops.Looper;
 import com.team195.frc.monitors.ConnectionMonitor;
@@ -36,7 +36,7 @@ public class Robot extends TimedRobot {
 	private Infrastructure mInfrastructure;
 	public static final AutoModeExecutor mAutoModeExecutor = new AutoModeExecutor();
 
-	private HIDController mHIDController;
+	private DriveControls mDriveControls;
 
 	public Robot() {
 		CrashTracker.logRobotConstruction();
@@ -54,13 +54,14 @@ public class Robot extends TimedRobot {
 			mDrive = Drive.getInstance();
 			mLED = LEDController.getInstance();
 			mInfrastructure = Infrastructure.getInstance();
-			mHIDController = HIDController.getInstance();
+			mDriveControls = DriveControls.getInstance();
 
 			mSubsystemManager = SubsystemManager.getInstance(
 					RobotStateEstimator.getInstance(),
 					VisionTracker.getInstance(),
 					Drive.getInstance(),
 					Turret.getInstance(),
+					Intake.getInstance(),
 //					ControlPanelManipulator.getInstance(),
 					Infrastructure.getInstance()
 			);
@@ -168,7 +169,7 @@ public class Robot extends TimedRobot {
 			mDrive.setOpenLoop(DriveSignal.NEUTRAL);
 			mDrive.setBrakeMode(false);
 			mDrive.forceBrakeModeUpdate();
-			mHIDController.start();
+			mDriveControls.start();
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t);
 			throw t;
@@ -193,7 +194,7 @@ public class Robot extends TimedRobot {
 
 			mDisabledLooper.stop();
 			mEnabledLooper.stop();
-			mHIDController.stop();
+			mDriveControls.stop();
 
 			if (TestConstants.RUN_INDIVIDUAL_TESTS) {
 				if (mSubsystemManager.checkSystemsPassDiagnostics())
@@ -223,7 +224,7 @@ public class Robot extends TimedRobot {
 		try {
 			CrashTracker.logDisabledInit();
 
-			mHIDController.stop();
+			mDriveControls.stop();
 			mEnabledLooper.stop();
 			mDrive.setBrakeMode(false);
 			mDrive.forceBrakeModeUpdate();

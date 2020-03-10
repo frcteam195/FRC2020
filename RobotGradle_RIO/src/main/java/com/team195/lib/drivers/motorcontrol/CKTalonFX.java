@@ -457,7 +457,7 @@ public class CKTalonFX extends TalonFX implements TuneableMotorController {
 
 	@Override
 	public double getGearRatioToOutputMechanism() {
-		return mGearRatioToOutput;
+		return mGearRatioToOutput != 0 ? mGearRatioToOutput : 1;
 	}
 
 	@Override

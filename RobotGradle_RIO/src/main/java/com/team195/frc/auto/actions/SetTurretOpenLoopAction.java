@@ -2,27 +2,30 @@ package com.team195.frc.auto.actions;
 
 import com.team195.frc.subsystems.Turret;
 
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class SetTurretOpenLoopAction implements Action {
 	private static final Turret mTurret = Turret.getInstance();
 
-	Function<Void, Boolean> mButtonGetterMethod;
-	Function<Void, Double> mAxisGetterMethod;
+	BooleanSupplier mButtonGetterMethod;
+	DoubleSupplier mAxisGetterMethod;
 
-	public SetTurretOpenLoopAction(Function<Void, Boolean> buttonGetterMethod, Function<Void, Double> axisGetterMethod) {
+	public SetTurretOpenLoopAction(BooleanSupplier buttonGetterMethod, DoubleSupplier axisGetterMethod) {
 		mButtonGetterMethod = buttonGetterMethod;
 		mAxisGetterMethod = axisGetterMethod;
 	}
 
 	@Override
 	public boolean isFinished() {
-		return (!mButtonGetterMethod.apply(null));
+		return (!mButtonGetterMethod.getAsBoolean());
 	}
 
 	@Override
 	public void update() {
-		mTurret.setTurretPosition(mAxisGetterMethod.apply(null) / 2.0);
+		mTurret.setTurretPosition(mAxisGetterMethod.getAsDouble() / 2.0);
 	}
 
 	@Override

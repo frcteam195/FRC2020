@@ -85,7 +85,7 @@ public class HIDController {
 				}
 
 				if (buttonBox1.getRawButton(1)) {
-					Turret.getInstance().setTurretPosition(1);
+
 				} else if (buttonBox1.getRisingEdgeButton(2)) {
 
 				} else if (buttonBox1.getRisingEdgeButton(3)) {
@@ -115,12 +115,13 @@ public class HIDController {
 				} else if (buttonBox1.getRisingEdgeButton(16)) {
 
 				} else {
-					Turret.getInstance().setTurretPosition(0);
+
 				}
 
 
 				if (buttonBox2.getRisingEdgeButton(1)) {
-
+					TeleopActionRunner.runAction(AutomatedAction.fromAction(
+							new SetIntakeAction(false, () -> buttonBox1.getRawButton(8)), 300, Turret.getInstance()));
 				} else if (buttonBox2.getRisingEdgeButton(3)) {
 
 				} else if (buttonBox2.getRisingEdgeButton(4)) {
@@ -168,8 +169,8 @@ public class HIDController {
 
 				} else if (armControlJoystick.getRisingEdgeButton(8)) {
 					//Turret Open Loop
-					TeleopActionRunner.runAction(AutomatedAction.fromAction(new SetTurretOpenLoopAction((t) -> armControlJoystick.getRawButton(8),
-							(t) -> -armControlJoystick.getNormalizedAxis(2, 0.1) / 3.0), 300, Turret.getInstance()));
+					TeleopActionRunner.runAction(AutomatedAction.fromAction(new SetTurretOpenLoopAction(() -> armControlJoystick.getRawButton(8),
+							() -> -armControlJoystick.getNormalizedAxis(2, 0.1) / 3.0), 300, Turret.getInstance()));
 				} else if (armControlJoystick.getRisingEdgeButton(9)) {
 					//Rehome Arm
 				} else if (armControlJoystick.getRisingEdgeButton(11)) {

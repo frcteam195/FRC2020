@@ -1,10 +1,8 @@
 package com.team195.frc.constants;
 
-import com.team195.frc.subsystems.Turret;
 import com.team195.lib.util.TurretHelper;
 import com.team254.lib.geometry.Pose2d;
 import com.team254.lib.geometry.Rotation2d;
-import com.team254.lib.geometry.Translation2d;
 
 public class CalConstants {
 	/* ROBOT PHYSICAL CONSTANTS */
@@ -37,8 +35,7 @@ public class CalConstants {
 
 	///////////////////////////////////////////////////////////////////////////
 	//Drive
-	public static final double kDriveDefaultVoltageCompensationSetpoint = 12.0;
-	public static final double kDriveDefaultOpenLoopRampRate = 0.1;
+	public static final double kDriveMaxAccel = 200;
 
 	// PID gains for drive velocity loop (LOW GEAR)
 	// Units: setpoint, error, and output are in ticks per second.
@@ -56,10 +53,10 @@ public class CalConstants {
 	///////////////////////////////////////////////////////////////////////////
 	//Color Panel Manipulator
 	//12:1 ??
-	public static final double kCPMPositionKp = 4.3;
+	public static final double kCPMPositionKp = 0.3;
 	public static final double kCPMPositionKi = 0.0;
-	public static final double kCPMPositionKd = 8.0;
-	public static final double kCPMPositionKf = 0.400360;
+	public static final double kCPMPositionKd = 2.0;
+	public static final double kCPMPositionKf = 0.04360;
 	public static final int kCPMPositionCruiseVel = 350;
 	public static final int kCPMPositionMMAccel = 350;
 	public static final int kCPMPositionSCurveStrength = 5;
@@ -75,7 +72,6 @@ public class CalConstants {
 	public static final double kTurretPositionKi = 0.0;
 	public static final double kTurretPositionKd = 2.0;
 	public static final double kTurretPositionKf = 1023.0 / 20000.0;
-	public static final double kTurretGearRatioMotorToTurretGear = 5;
 	public static final int kTurretPositionCruiseVel = 350;
 	public static final int kTurretPositionMMAccel = 350;
 	public static final int kTurretPositionSCurveStrength = 5;
@@ -83,23 +79,35 @@ public class CalConstants {
 	public static final int kTurretPeakCurrentThreshold = 9;
 	public static final int kTurretPeakCurrentThresholdExceedDuration = 0;
 
-	public static final double kTurretHoodKp = 0.4;
+	public static final double kTurretHoodKp = 0.3;
 	public static final double kTurretHoodKi = 0.0;
 	public static final double kTurretHoodKd = 1.7;
 	public static final double kTurretHoodKf = 0.047;
+	public static final int kTurretHoodCruiseVel = 120;
+	public static final int kTurretHoodMMAccel = 150;
+	public static final int kTurretHoodSCurveStrength = 5;
+	public static final double kTurretHoodContinuousStatorCurrentLimit = 10;
 
 	public static final double kShooterWheelKp = 0.2;
 	public static final double kShooterWheelKi = 0.0;
 	public static final double kShooterWheelKd = 22.0;
 	public static final double kShooterWheelKf = 0.046300;
+	public static final double kShooterWheelMaxAccel = 1200; //RPM/s
 
 	//Units in rotations
-	public static final double kTurretMinDegrees = 270;
+	public static final double kTurretMinDegrees = 400;
 	public static final double kTurretMaxDegrees = -kTurretMinDegrees;
-	public static final double kTurretForwardSoftLimit = TurretHelper.convertTurretDegreesToRotations(kTurretMinDegrees);
-	public static final double kTurretReverseSoftLimit = TurretHelper.convertTurretDegreesToRotations(kTurretMaxDegrees);
 	public static final double kTurretSmallGearTeeth = 33;
 	public static final double kTurretLargeGearTeeth = 155;
+	public static final double kTurretGearRatioMotorToTurretGear = 5;
+	public static final double kTurretOverallGearRatioDeg = CalConstants.kTurretGearRatioMotorToTurretGear * (CalConstants.kTurretLargeGearTeeth / CalConstants.kTurretSmallGearTeeth) * 360.0;
+
+	public static final double kTurretHoodMotorToTransmissionOutputGearRatio = 40;
+	public static final double kTurretHoodShaftGearTeeth = 30;
+	public static final double kTurretHoodTeeth = 353;
+	public static final double kTurretHoodOverallGearRatioDeg = kTurretHoodMotorToTransmissionOutputGearRatio * (kTurretHoodTeeth / kTurretHoodShaftGearTeeth) * 360;
+	public static final double kTurretHoodMinDegrees = 0;
+	public static final double kTurretHoodMaxDegrees = 120;
 
 	// TODO measure on robot!
 	public static final Pose2d kVehicleToTurret = new Pose2d(0.42, -1.75, Rotation2d.identity()); //Pose of turret w.r.t. robot
@@ -108,6 +116,19 @@ public class CalConstants {
 
 	public static final double kCameraLensHeightToTargetHeightDelta = 15;
 	public static final double kCameraLensAngleToHorizontal = 18.25;
+	///////////////////////////////////////////////////////////////////////////
+
+	///////////////////////////////////////////////////////////////////////////
+	// Intake Feeder
+
+	public static final int kIntakeContinuousCurrentLimit = 15;
+	public static final int kIntakePeakCurrentThreshold = 0;
+	public static final int kIntakePeakCurrentThresholdExceedDuration = 0;
+
+	public static final int kFeederContinuousCurrentLimit = 15;
+	public static final int kFeederPeakCurrentThreshold = 0;
+	public static final int kFeederPeakCurrentThresholdExceedDuration = 0;
+	///////////////////////////////////////////////////////////////////////////
 
 	public static final double kColorWheelDiameterInches = 32.0;
 	public static final double kColorWheelColorArcInches = 12.5;
