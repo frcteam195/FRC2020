@@ -4,20 +4,12 @@ import com.team195.frc.constants.CalConstants;
 import com.team254.lib.geometry.Rotation2d;
 
 public class TurretHelper {
-	public static double convertTurretRotationsToMotorRotations(double rotations) {
-		return rotations * (CalConstants.kTurretLargeGearTeeth / CalConstants.kTurretSmallGearTeeth);
-	}
-
-	public static double convertMotorRotationsToTurretRotations(double rotations) {
-		return rotations / (CalConstants.kTurretLargeGearTeeth / CalConstants.kTurretSmallGearTeeth);
-	}
-
-	public static double convertRotationsToTurretDegrees(double rotations) {
-		return rotations / (CalConstants.kTurretLargeGearTeeth / CalConstants.kTurretSmallGearTeeth / 360.0);
-	}
+//	public static double convertRotationsToTurretDegrees(double rotations) {
+//		return rotations / CalConstants.kTurretGearRatioMotorToTurretGear / (CalConstants.kTurretLargeGearTeeth / CalConstants.kTurretSmallGearTeeth / 360.0);
+//	}
 
 	public static double convertTurretDegreesToRotations(double degrees) {
-		return degrees * (CalConstants.kTurretLargeGearTeeth / CalConstants.kTurretSmallGearTeeth / 360.0);
+		return degrees * CalConstants.kTurretGearRatioMotorToTurretGear * (CalConstants.kTurretLargeGearTeeth / CalConstants.kTurretSmallGearTeeth / 360.0);
 	}
 
 	public static double calculateSetpointForRobotCentricRotation(double currentRotationDegrees, Rotation2d robotCentricSetpoint, double minDegrees, double maxDegrees) {

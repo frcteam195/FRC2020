@@ -147,6 +147,10 @@ public class CKDashJoystick {
 		return false;
 	}
 
+	public boolean getTriggerPressed(int axis, double threshold) {
+		return Math.abs(getRawAxis(axis)) > threshold;
+	}
+
 	private boolean currTrigRising;
 	private boolean retValTrigRising;
 	public boolean getRisingEdgeTrigger(int axis, double threshold) {

@@ -65,15 +65,6 @@ public class RobotState {
 				.transformBy(Pose2d.exp(vehicle_velocity_predicted_.scaled(lookahead_time)));
 	}
 
-	public Pose2d getFieldToTurret(double timestamp, double currentTurretRotationDegrees) {
-		return getFieldToVehicle(timestamp).transformBy(new Pose2d(CalConstants.kVehicleToTurret.getTranslation(), Rotation2d.fromDegrees(currentTurretRotationDegrees)));
-	}
-
-	public Pose2d getLatestFieldToTurretPose(double currentTurretRotationDegrees) {
-		return field_to_vehicle_.lastEntry().getValue().transformBy(new Pose2d(CalConstants.kVehicleToTurret.getTranslation(), Rotation2d.fromDegrees(currentTurretRotationDegrees)));
-	}
-
-
 	public void addFieldToVehicleObservation(double timestamp, Pose2d observation) {
 		field_to_vehicle_.put(new InterpolatingDouble(timestamp), observation);
 	}

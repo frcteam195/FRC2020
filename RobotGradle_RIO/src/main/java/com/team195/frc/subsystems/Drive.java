@@ -136,9 +136,6 @@ public class Drive extends Subsystem {
 		mRightMaster.setMotionParameters(CalConstants.kDriveLowGearPositionCruiseVel, CalConstants.kDriveLowGearPositionAccel);
 		mRightMaster.configMasterAndSlaves((t) -> {
 			t.setInverted(true);
-			return ErrorCode.OK;
-		});
-		mRightMaster.configMasterAndSlaves((t) -> {
 			t.setCurrentLimit(CalConstants.kDriveLowGearCurrentLim);
 			return ErrorCode.OK;
 		});
@@ -318,6 +315,14 @@ public class Drive extends Subsystem {
 	public void zeroSensors() {
 		setHeading(Rotation2d.identity());
 		resetEncoders();
+	}
+
+	public double getLeftDemand() {
+		return mPeriodicIO.left_demand;
+	}
+
+	public double getRightDemand() {
+		return mPeriodicIO.right_demand;
 	}
 
 	public double getLeftEncoderDistance() {

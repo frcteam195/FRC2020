@@ -61,7 +61,7 @@ public class Robot extends TimedRobot {
 					VisionTracker.getInstance(),
 					Drive.getInstance(),
 					Turret.getInstance(),
-					ControlPanelManipulator.getInstance(),
+//					ControlPanelManipulator.getInstance(),
 					Infrastructure.getInstance()
 			);
 
@@ -88,18 +88,24 @@ public class Robot extends TimedRobot {
 		}
 	}
 
+	private int count = 0;
+
 	@Override
 	public void robotPeriodic() {
-//		ConsoleReporter.report("ElevatorPos: " + Elevator.getInstance().getPosition());
-//		ConsoleReporter.report(mEnabledLooper.generateReport());
-//		ConsoleReporter.report(mDisabledLooper.generateReport());
-//		ConsoleReporter.report("LeftDrivePos:" + Drive.getInstance().getLeftEncoderDistance() + ", RigthDrivePos:" + Drive.getInstance().getRightEncoderDistance());
-//		ConsoleReporter.report("GyroRoll:" + Drive.getInstance().getRoll());
-//		ConsoleReporter.report("Spark:" + Drive.getInstance().getRawLeftSparkEncoder() + ", Wheel:" + Drive.getInstance().getRawLeftEncoder());
-//		ConsoleReporter.report("BallIntakePos:"+BallIntakeArm.getInstance().getPosition());
-//		ConsoleReporter.report(mAutoModeSelector.getAutoMode().getClass().getSimpleName().toString());
-//		ConsoleReporter.report("GyroDeg:" + Drive.getInstance().getRawYaw());
-//		ConsoleReporter.report("Skew: " + VisionTracker.getInstance().getTargetSkew());
+		if (count++ % 20 == 0) {
+//			ConsoleReporter.report(mEnabledLooper.generateReport());
+//			ConsoleReporter.report(mDisabledLooper.generateReport());
+//			ConsoleReporter.report("LeftDrivePos:" + Drive.getInstance().getLeftEncoderDistance() + ", RigthDrivePos:" + Drive.getInstance().getRightEncoderDistance());
+//			ConsoleReporter.report("GyroRoll:" + Drive.getInstance().getRoll());
+//			ConsoleReporter.report(mAutoModeSelector.getAutoMode().getClass().getSimpleName().toString());
+//			ConsoleReporter.report("GyroDeg:" + Drive.getInstance().getRawYaw());
+//			ConsoleReporter.report("Skew: " + VisionTracker.getInstance().getTargetSkew());
+
+//			System.out.println("Drive Left Output: " + mDrive.getLeftDemand());
+//			System.out.println("Drive Right Output: " + mDrive.getRightDemand());
+//			System.out.println("Turret pos: " + Turret.getInstance().getPosition());
+			System.out.println("Shooter Velocity: " + Turret.getInstance().getShooterVelocity());
+		}
 	}
 
 	@Override
@@ -171,6 +177,7 @@ public class Robot extends TimedRobot {
 
 	@Override
 	public void teleopPeriodic() {
+//		System.out.println("Turret vel: " + Turret.getInstance().getSensorVelocity());
 //		try {
 //
 //		} catch (Throwable t) {
@@ -228,6 +235,7 @@ public class Robot extends TimedRobot {
 				}
 			}
 			mDisabledLooper.start();
+			mHIDController.start();
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t);
 			throw t;
@@ -237,6 +245,7 @@ public class Robot extends TimedRobot {
 	@Override
 	public void disabledPeriodic() {
 		try {
+			mDrive.setBrakeMode(false);
 			mAutoModeExecutor.reset();
 //			mAutoModeExecutor.setAutoMode(mAutoModeSelector.getAutoMode());
 		} catch (Throwable t) {

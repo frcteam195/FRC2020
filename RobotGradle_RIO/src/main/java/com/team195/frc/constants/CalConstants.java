@@ -71,32 +71,38 @@ public class CalConstants {
 	///////////////////////////////////////////////////////////////////////////
 	//Turret
 	//50:1
-	public static final double kTurretPositionKp = 4.3;
+	public static final double kTurretPositionKp = 0.5;
 	public static final double kTurretPositionKi = 0.0;
-	public static final double kTurretPositionKd = 8.0;
-	public static final double kTurretPositionKf = 0.400360;
+	public static final double kTurretPositionKd = 2.0;
+	public static final double kTurretPositionKf = 1023.0 / 20000.0;
+	public static final double kTurretGearRatioMotorToTurretGear = 5;
 	public static final int kTurretPositionCruiseVel = 350;
 	public static final int kTurretPositionMMAccel = 350;
 	public static final int kTurretPositionSCurveStrength = 5;
 	public static final int kTurretContinuousCurrentLimit = 8;
 	public static final int kTurretPeakCurrentThreshold = 9;
 	public static final int kTurretPeakCurrentThresholdExceedDuration = 0;
-	public static final double kTurretBallShooterOpenLoopRamp = 0.2;
-	public static final int kTurretBallShooterContinuousCurrentLimit = 15;
-	public static final int kTurretBallShooterPeakCurrentThreshold = 25;
-	public static final int kTurretBallShooterPeakCurrentThresholdExceedDuration = 450;
+
+	public static final double kShooterWheelKp = 0.5;
+	public static final double kShooterWheelKi = 0.0;
+	public static final double kShooterWheelKd = 1.0;
+	public static final double kShooterWheelKf = 1023.0 / 5730.0;
+
 	//Units in rotations
 	public static final double kTurretMinDegrees = 270;
 	public static final double kTurretMaxDegrees = -kTurretMinDegrees;
 	public static final double kTurretForwardSoftLimit = TurretHelper.convertTurretDegreesToRotations(kTurretMinDegrees);
 	public static final double kTurretReverseSoftLimit = TurretHelper.convertTurretDegreesToRotations(kTurretMaxDegrees);
-	public static final double kTurretSmallGearTeeth = 18;
-	public static final double kTurretLargeGearTeeth = 124;
+	public static final double kTurretSmallGearTeeth = 33;
+	public static final double kTurretLargeGearTeeth = 155;
 
 	// TODO measure on robot!
 	public static final Pose2d kVehicleToTurret = new Pose2d(0.42, -1.75, Rotation2d.identity()); //Pose of turret w.r.t. robot
 	// TODO measure on robot!
 	public static final Pose2d kTurretToCamera = new Pose2d(9.737, -0.25, Rotation2d.identity()); //Pose of camera w.r.t. turret
+
+	public static final double kCameraLensHeightToTargetHeightDelta = 15;
+	public static final double kCameraLensAngleToHorizontal = 18.25;
 
 	public static final double kColorWheelDiameterInches = 32.0;
 	public static final double kColorWheelColorArcInches = 12.5;

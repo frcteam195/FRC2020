@@ -140,6 +140,23 @@ public class VisionTracker extends Subsystem {
 		return mPeriodicIO.camera_to_target_pose;
 	}
 
+	public Translation2d getCameraToTargetTranslation() {
+		// Convert to spherical coordinates https://en.wikipedia.org/wiki/Spherical_coordinate_system
+		Rotation2d phi = Rotation2d.fromDegrees(-1 * mPeriodicIO.target_horizontal_deviation);
+		Rotation2d theta = Rotation2d.fromDegrees(90).rotateBy(Rotation2d.fromDegrees(mPeriodicIO.target_vertical_deviation + CalConstants.kCameraLensAngleToHorizontal).inverse());
+
+		// Convert to cartesian unit vector (radius r is implicitly 1, inclination theta, azimuth phi)
+		double vector_x = theta.sin() * phi.cos();
+		double vector_y = theta.sin() * phi.sin();
+		double vector_z = theta.cos();
+
+		// Determine the scaling of the z component of the unit vector to get to the plane
+		double scaling = CalConstants.kCameraLensHeightToTargetHeightDelta / vector_z;
+
+		// Scale the x and y component by said scaling.
+		return new Translation2d(vector_x * scaling, vector_y * scaling);
+	}
+
 	@Override
 	public synchronized List<Object> generateReport() {
 		loopTimer.start();
@@ -165,23 +182,37 @@ public class VisionTracker extends Subsystem {
 				mPeriodicIO.target_horizontal_side = mCurrentTargetingLimelightNT.getEntry("thor").getDouble(0);
 				mPeriodicIO.target_vertical_side = mCurrentTargetingLimelightNT.getEntry("tvert").getDouble(0);
 				mPeriodicIO.get_pipeline_value = mCurrentTargetingLimelightNT.getEntry("getpipe").getDouble(0);
-				mPeriodicIO.camera_translation = new CameraTranslation(mCurrentTargetingLimelightNT.getEntry("camtran").getDoubleArray(mPeriodicIO.camera_translation_rotation_default_array));
-				mPeriodicIO.camera_to_target_pose = new Pose2d(new Translation2d(mPeriodicIO.camera_translation.x, mPeriodicIO.camera_translation.y), Rotation2d.fromDegrees(mPeriodicIO.camera_translation.yaw));
-				if (!mPeriodicIO.camera_to_target_pose.equals(mPeriodicIO.prev_camera_to_target_pose)) {
-//					Pose2d targetToCamera = mPeriodicIO.cameraToTargetPose.inverse();
-//					Pose2d cameraToTurret = CalConstants.kTurretToCamera.inverse();
-//					Pose2d targetToTurret = targetToCamera.transformBy(cameraToTurret);
-//					Pose2d turretToVehicle = CalConstants.kVehicleToTurret.inverse();
-//					Pose2d targetToVehicle = targetToTurret.transformBy(turretToVehicle);
-//					Pose2d fieldToVehicle = TargetingConstants.fieldToOuterTarget.transformBy(targetToVehicle);
-//					RobotState.getInstance().addFieldToVehicleObservation(Timer.getFPGATimestamp(), fieldToVehicle);
-					Pose2d latestAbsoluteFieldToVehicle = TargetingConstants.fieldToOuterTarget.transformBy(
-							mPeriodicIO.camera_to_target_pose.inverse()    //May want to use robot angle here instead of angle from Camera pose
-							.transformBy(CalConstants.kTurretToCamera.inverse())
-							.transformBy(Turret.getInstance().getLatestVehicleToTurretPose().inverse())
+//				mPeriodicIO.camera_translation = new CameraTranslation(mCurrentTargetingLimelightNT.getEntry("camtran").getDoubleArray(mPeriodicIO.camera_translation_rotation_default_array));
+//				mPeriodicIO.camera_to_target_pose = new Pose2d(new Translation2d(mPeriodicIO.camera_translation.x, mPeriodicIO.camera_translation.y), Rotation2d.fromDegrees(mPeriodicIO.camera_translation.yaw));
+//				if (!mPeriodicIO.camera_to_target_pose.equals(mPeriodicIO.prev_camera_to_target_pose)) {
+////					Pose2d targetToCamera = mPeriodicIO.cameraToTargetPose.inverse();
+////					Pose2d cameraToTurret = CalConstants.kTurretToCamera.inverse();
+////					Pose2d targetToTurret = targetToCamera.transformBy(cameraToTurret);
+////					Pose2d turretToVehicle = CalConstants.kVehicleToTurret.inverse();
+////					Pose2d targetToVehicle = targetToTurret.transformBy(turretToVehicle);
+////					Pose2d fieldToVehicle = TargetingConstants.fieldToOuterTarget.transformBy(targetToVehicle);
+////					RobotState.getInstance().addFieldToVehicleObservation(Timer.getFPGATimestamp(), fieldToVehicle);
+//					Pose2d latestAbsoluteFieldToVehicle = TargetingConstants.fieldToOuterTarget.transformBy(
+//							mPeriodicIO.camera_to_target_pose.inverse()    //May want to use robot angle here instead of angle from Camera pose
+//							.transformBy(CalConstants.kTurretToCamera.inverse())
+//							.transformBy(Turret.getInstance().getLatestVehicleToTurretPose().inverse())
+//					);
+//					RobotState.getInstance().addFieldToVehicleObservation(Timer.getFPGATimestamp(), latestAbsoluteFieldToVehicle);
+//					mPeriodicIO.prev_camera_to_target_pose = mPeriodicIO.camera_to_target_pose;
+//				}
+
+				if (mPeriodicIO.target_valid > 0) {
+					mPeriodicIO.camera_to_target_pose = TargetingConstants.fieldToOuterTarget.transformBy(
+							new Pose2d(getCameraToTargetTranslation().translateBy(CalConstants.kTurretToCamera.inverse().getTranslation()), Turret.getInstance().getLatestFieldToTurretPose().getRotation()).inverse()
+									.transformBy(Turret.getInstance().getLatestVehicleToTurretPose().inverse())
 					);
-					RobotState.getInstance().addFieldToVehicleObservation(Timer.getFPGATimestamp(), latestAbsoluteFieldToVehicle);
-					mPeriodicIO.prev_camera_to_target_pose = mPeriodicIO.camera_to_target_pose;
+					RobotState.getInstance().addFieldToVehicleObservation(Timer.getFPGATimestamp(), mPeriodicIO.camera_to_target_pose);
+
+					//No differential updates for now
+//					if (!mPeriodicIO.camera_to_target_pose.equals(mPeriodicIO.prev_camera_to_target_pose)) {
+//						RobotState.getInstance().addFieldToVehicleObservation(Timer.getFPGATimestamp(), mPeriodicIO.camera_to_target_pose);
+//						mPeriodicIO.prev_camera_to_target_pose = mPeriodicIO.camera_to_target_pose;
+//					}
 				}
 			}
 			else {

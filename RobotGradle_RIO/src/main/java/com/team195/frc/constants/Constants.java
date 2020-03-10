@@ -24,7 +24,7 @@ public class Constants {
     public static final double kJoystickThreshold = 0.5;
     public static final double kJoystickJogThreshold = 0.4;
     public static final double kJoystickTriggerThreshold = 0.3;
-    public static final double kJoystickDeadband = 0.12;
+    public static final double kJoystickDeadband = 0.04;
 
 
     //Thread prioritization - 5 is default

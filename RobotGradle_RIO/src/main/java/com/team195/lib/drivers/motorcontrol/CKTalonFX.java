@@ -104,9 +104,6 @@ public class CKTalonFX extends TalonFX implements TuneableMotorController {
 		runTalonFunctionWithRetry((t) -> super.setControlFramePeriod(ControlFrame.Control_3_General, config.CONTROL_FRAME_PERIOD_MS));
 		runTalonFunctionWithRetry((t) -> super.setStatusFramePeriod(StatusFrame.Status_1_General, config.STATUS_FRAME_GENERAL_1_MS, Constants.kLongCANTimeoutMs));
 		runTalonFunctionWithRetry((t) -> super.setStatusFramePeriod(StatusFrame.Status_2_Feedback0, config.STATUS_FRAME_FEEDBACK0_2_MS, Constants.kLongCANTimeoutMs));
-		runTalonFunctionWithRetry((t) -> super.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, Constants.kLongCANTimeoutMs));
-		runTalonFunctionWithRetry((t) -> super.configVelocityMeasurementPeriod(VelocityMeasPeriod.Period_50Ms, Constants.kLongCANTimeoutMs));
-		runTalonFunctionWithRetry((t) -> super.configVelocityMeasurementWindow(1, Constants.kLongCANTimeoutMs));
 		configCurrentLimit(motorBreaker.value - 10, motorBreaker.value, getMSDurationForBreakerLimit(motorBreaker.value * 2, motorBreaker.value, 8));
 		runTalonFunctionWithRetry((t) -> super.configVoltageCompSaturation(mVoltageCompSat));
 		runTalonFunctionWithRetry((t) -> {

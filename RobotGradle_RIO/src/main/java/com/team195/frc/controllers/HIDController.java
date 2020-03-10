@@ -24,8 +24,6 @@ public class HIDController {
 		return mInstance;
 	}
 
-	private static final boolean USE_CHEESY_DRIVE = true;
-
 	private final CKDashJoystick driveJoystick = new CKDashJoystick(0);
 	private final CKDashJoystick armControlJoystick = new CKDashJoystick(1);
 	private final CKDashJoystick buttonBox1 = new CKDashJoystick(2);
@@ -33,15 +31,9 @@ public class HIDController {
 
 	private final Object taskRunningLock_ = new Object();
 
-	private CheesyDriveHelper mCheesyDriveHelper = new CheesyDriveHelper();
 	private Drive mDrive = Drive.getInstance();
 
 	private boolean firstRun = true;
-	private boolean stoppedAuto = false;
-
-	private boolean autoBrake = false;
-	private ElapsedTimer autoBrakeTimer = new ElapsedTimer();
-	private static final double kBrakeTimeout = 1;
 
 	private static double mThrottle = 0;
 	private static double mTurn = 0;
@@ -62,198 +54,143 @@ public class HIDController {
 				firstRun = false;
 			}
 			try {
-				if (Infrastructure.getInstance().isDuringAuto() && !stoppedAuto) {
-					if (driveJoystick.isAxisInputActive()) {
-//						if (Robot.mAutoModeExecutor.isSet())
-//							Robot.mAutoModeExecutor.stop();
-//						stoppedAuto = true;
-					}
+				mThrottle = -driveJoystick.getNormalizedAxis(1, Constants.kJoystickDeadband);
+				mTurn = driveJoystick.getNormalizedAxis(2, Constants.kJoystickDeadband);
+
+
+				if (mDrive.getDriveControlState() == Drive.DriveControlState.OPEN_LOOP) {
+					mDrive.setBrakeMode(driveJoystick.getTriggerPressed(3, Constants.kJoystickTriggerThreshold) || VisionTracker.getInstance().isVisionEnabled());
+					mDriveSignalOutput.set(Math.max(Math.min(mThrottle + mTurn, 1), -1), Math.max(Math.min(mThrottle - mTurn, 1), -1));
+					mDrive.setOpenLoop(mDriveSignalOutput);
+				}
+
+				if (driveJoystick.getRawButton(1)) {
+
+				} else if (driveJoystick.getRawButton(2)) {
+
 				} else {
-					//User Control Interface code here
 
-					if (!USE_CHEESY_DRIVE) {
-						mThrottle = -driveJoystick.getSmoothedAxis(1, Constants.kJoystickDeadband, 2);
-						mTurn = driveJoystick.getNormalizedAxis(4, Constants.kJoystickDeadband) * 0.5;
-//						if (VisionTracker.getInstance().isVisionEnabled() && VisionTracker.getInstance().getTargetMode() == VisionTracker.TargetMode.HATCH) {
-//							if (Turret.getInstance().getSetpoint() == TurretPositions.Right90) {
-//								if (VisionTracker.getInstance().isTargetFound())
-//									mThrottle = -Math.max(Math.min(VisionTracker.getInstance().getTargetHorizAngleDev() * 0.01, 1), -1);
-//							} else if (Turret.getInstance().getSetpoint() == TurretPositions.Left90) {
-//								if (VisionTracker.getInstance().isTargetFound())
-//									mThrottle = Math.max(Math.min(VisionTracker.getInstance().getTargetHorizAngleDev() * 0.01, 1), -1);
-//							} else {
-//								if (VisionTracker.getInstance().isTargetFound())
-//									mTurn = Math.max(Math.min(VisionTracker.getInstance().getTargetHorizAngleDev() * 0.007, 1), -1);
-//							}
-//						}
+				}
 
+				//Left Trigger
+//				if (driveJoystick.getRisingEdgeTrigger(3, Constants.kJoystickTriggerThreshold)) {
+//
+//				} else {
+//
+//				}
 
-						if (mDrive.getDriveControlState() == Drive.DriveControlState.OPEN_LOOP) {
-							mDrive.setBrakeMode(driveJoystick.getRawButton(5) || driveJoystick.getRawButton(6) || VisionTracker.getInstance().isVisionEnabled());
-							mDriveSignalOutput.set(Math.max(Math.min(mThrottle + mTurn, 1), -1), Math.max(Math.min(mThrottle - mTurn, 1), -1));
-							mDrive.setOpenLoop(mDriveSignalOutput);
-						}
-					} else {
-						mThrottle = -driveJoystick.getNormalizedAxis(1, Constants.kJoystickDeadband);
-						mTurn = driveJoystick.getNormalizedAxis(4, Constants.kJoystickDeadband) * 0.6;
+				//Right Trigger
+				if (driveJoystick.getRisingEdgeTrigger(4, Constants.kJoystickTriggerThreshold)) {
 
-//						if (VisionTracker.getInstance().isVisionEnabled() && VisionTracker.getInstance().getTargetMode() == VisionTracker.TargetMode.HATCH) {
-//							if (Turret.getInstance().getSetpoint() == TurretPositions.Right90) {
-//								if (VisionTracker.getInstance().isTargetFound())
-//									mThrottle = -Math.max(Math.min(VisionTracker.getInstance().getTargetHorizAngleDev() * 0.01, 1), -1);
-//							} else if (Turret.getInstance().getSetpoint() == TurretPositions.Left90) {
-//								if (VisionTracker.getInstance().isTargetFound())
-//									mThrottle = Math.max(Math.min(VisionTracker.getInstance().getTargetHorizAngleDev() * 0.01, 1), -1);
-//							} else {
-//								if (VisionTracker.getInstance().isTargetFound())
-//									mTurn = Math.max(Math.min(VisionTracker.getInstance().getTargetHorizAngleDev() * 0.01, 0.1), -0.1);
-//							}
-//						}
+				}
 
-						if (mDrive.getDriveControlState() == Drive.DriveControlState.OPEN_LOOP) {
-							boolean brake = driveJoystick.getRawButton(5) || driveJoystick.getRawButton(6) || VisionTracker.getInstance().isVisionEnabled();
-							mDrive.setBrakeMode(brake || autoBrake);
+				if (buttonBox1.getRawButton(1)) {
+					Turret.getInstance().setTurretPosition(1);
+				} else if (buttonBox1.getRisingEdgeButton(2)) {
 
-							if (brake)
-								autoBrakeTimer.start();
+				} else if (buttonBox1.getRisingEdgeButton(3)) {
 
-							autoBrake = autoBrakeTimer.hasElapsed() < kBrakeTimeout;
+				} else if (buttonBox1.getRisingEdgeButton(4)) {
 
+				} else if (buttonBox1.getRisingEdgeButton(5)) {
 
-							boolean quickTurn = driveJoystick.getRawButton(6) || VisionTracker.getInstance().isVisionEnabled();
-							if (quickTurn)
-								mTurn *= 0.5;
+				} else if (buttonBox1.getRisingEdgeButton(7)) {
 
-							mDrive.setOpenLoop(mCheesyDriveHelper.cheesyDrive(mThrottle, mTurn, quickTurn, true));
-						}
-					}
+				} else if (buttonBox1.getRisingEdgeButton(8)) {
 
-					if (driveJoystick.getRawButton(1)) {
-//						VisionTracker.getInstance().setTargetMode(VisionTracker.TargetMode.HATCH);
-//						if (!VisionTracker.getInstance().isTargetAreaReached())
-//							VisionTracker.getInstance().setVisionEnabled(true);
-//						else
-//							VisionTracker.getInstance().setVisionEnabled(false);
-					} else if (driveJoystick.getRawButton(2)) {
-//						VisionTracker.getInstance().setTargetMode(VisionTracker.TargetMode.HATCH);
-//						VisionTracker.getInstance().setVisionEnabled(true);
-					} else {
-//						if (VisionTracker.getInstance().getTargetMode() == VisionTracker.TargetMode.HATCH)
-//							VisionTracker.getInstance().setVisionEnabled(false);
-					}
+				} else if (buttonBox1.getRisingEdgeButton(9)) {
 
-					if (driveJoystick.getRisingEdgeTrigger(2, Constants.kJoystickTriggerThreshold)) {
+				} else if (buttonBox1.getRisingEdgeButton(10)) {
 
-					} else if (driveJoystick.getRisingEdgeTrigger(3, Constants.kJoystickTriggerThreshold)) {
+				} else if (buttonBox1.getRisingEdgeButton(11)) {
 
-					}
+				} else if (buttonBox1.getRisingEdgeButton(12)) {
 
-					if (buttonBox1.getRisingEdgeButton(1)) {
+				} else if (buttonBox1.getRisingEdgeButton(13)) {
 
-					} else if (buttonBox1.getRisingEdgeButton(2)) {
+				} else if (buttonBox1.getRisingEdgeButton(14)) {
 
-					} else if (buttonBox1.getRisingEdgeButton(3)) {
+				} else if (buttonBox1.getRisingEdgeButton(15)) {
 
-					} else if (buttonBox1.getRisingEdgeButton(4)) {
+				} else if (buttonBox1.getRisingEdgeButton(16)) {
 
-					} else if (buttonBox1.getRisingEdgeButton(5)) {
-
-					} else if (buttonBox1.getRisingEdgeButton(7)) {
-
-					} else if (buttonBox1.getRisingEdgeButton(8)) {
-
-					} else if (buttonBox1.getRisingEdgeButton(9)) {
-
-					} else if (buttonBox1.getRisingEdgeButton(10)) {
-
-					} else if (buttonBox1.getRisingEdgeButton(11)) {
-
-					} else if (buttonBox1.getRisingEdgeButton(12)) {
-
-					} else if (buttonBox1.getRisingEdgeButton(13)) {
-
-					} else if (buttonBox1.getRisingEdgeButton(14)) {
-
-					} else if (buttonBox1.getRisingEdgeButton(15)) {
-
-					} else if (buttonBox1.getRisingEdgeButton(16)) {
-
-					}
+				} else {
+					Turret.getInstance().setTurretPosition(0);
+				}
 
 
-					if (buttonBox2.getRisingEdgeButton(1)) {
+				if (buttonBox2.getRisingEdgeButton(1)) {
 
-					} else if (buttonBox2.getRisingEdgeButton(3)) {
+				} else if (buttonBox2.getRisingEdgeButton(3)) {
 
-					} else if (buttonBox2.getRisingEdgeButton(4)) {
+				} else if (buttonBox2.getRisingEdgeButton(4)) {
 
-					} else if (buttonBox2.getRisingEdgeButton(5)) {
+				} else if (buttonBox2.getRisingEdgeButton(5)) {
 
-					} else if (buttonBox2.getRisingEdgeButton(6)) {
+				} else if (buttonBox2.getRisingEdgeButton(6)) {
 
-					} else if (buttonBox2.getRisingEdgeButton(7)) {
+				} else if (buttonBox2.getRisingEdgeButton(7)) {
 
-					} else if (buttonBox2.getRisingEdgeButton(8)) {
+				} else if (buttonBox2.getRisingEdgeButton(8)) {
 
-					} else if (buttonBox2.getRisingEdgeButton(9)) {
+				} else if (buttonBox2.getRisingEdgeButton(9)) {
 
-					} else if (buttonBox2.getRisingEdgeButton(10)) {
+				} else if (buttonBox2.getRisingEdgeButton(10)) {
 
-					} else if (buttonBox2.getRisingEdgeButton(11)) {
+				} else if (buttonBox2.getRisingEdgeButton(11)) {
 
-					} else if (buttonBox2.getRisingEdgeButton(12)) {
+				} else if (buttonBox2.getRisingEdgeButton(12)) {
 
-					} else if (buttonBox2.getRisingEdgeButton(13)) {
+				} else if (buttonBox2.getRisingEdgeButton(13)) {
 
-					} else if (buttonBox2.getRisingEdgeButton(14)) {
-						//Flash LEDs
-						LEDController.getInstance().setRequestedState(LEDController.LEDState.BLINK);
-					}
+				} else if (buttonBox2.getRisingEdgeButton(14)) {
+					//Flash LEDs
+					LEDController.getInstance().setRequestedState(LEDController.LEDState.BLINK);
+				}
 
 
-					if (armControlJoystick.getRisingEdgeButton(1)) {
-						//Flash LEDs to signal Human Player
-						LEDController.getInstance().setLEDColor(Constants.kRequestGamePieceColor);
-						LEDController.getInstance().setRequestedState(LEDController.LEDState.BLINK);
-					} else if (armControlJoystick.getRisingEdgeButton(2)) {
-						TeleopActionRunner.runAction(AutomatedAction.fromAction(new SetTurretPositionJoystickAction((t) -> armControlJoystick.getRawButton(2),
-								(t) -> armControlJoystick.getNormalizedAxis(2, 0.1)), 300, Turret.getInstance()));
-					} else if (armControlJoystick.getRisingEdgeButton(3)) {
+				if (armControlJoystick.getRisingEdgeButton(1)) {
+					//Flash LEDs to signal Human Player
+					LEDController.getInstance().setLEDColor(Constants.kRequestGamePieceColor);
+					LEDController.getInstance().setRequestedState(LEDController.LEDState.BLINK);
+				} else if (armControlJoystick.getRisingEdgeButton(2)) {
+//					TeleopActionRunner.runAction(AutomatedAction.fromAction(new SetTurretPositionJoystickAction((t) -> armControlJoystick.getRawButton(2),
+//							(t) -> armControlJoystick.getNormalizedAxis(2, 0.1)), 300, Turret.getInstance()));
+				} else if (armControlJoystick.getRisingEdgeButton(3)) {
 
-					} else if (armControlJoystick.getRisingEdgeButton(4)) {
+				} else if (armControlJoystick.getRisingEdgeButton(4)) {
 
-					} else if (armControlJoystick.getRisingEdgeButton(5)) {
+				} else if (armControlJoystick.getRisingEdgeButton(5)) {
 
-					} else if (armControlJoystick.getRisingEdgeButton(6)) {
+				} else if (armControlJoystick.getRisingEdgeButton(6)) {
 
-					} else if (armControlJoystick.getRisingEdgeButton(7)) {
+				} else if (armControlJoystick.getRisingEdgeButton(7)) {
 
-					} else if (armControlJoystick.getRisingEdgeButton(8)) {
-						//Turret Open Loop
-						TeleopActionRunner.runAction(AutomatedAction.fromAction(new SetTurretOpenLoopAction((t) -> armControlJoystick.getRawButton(8),
-								(t) -> -armControlJoystick.getNormalizedAxis(2, 0.1) / 3.0), 300, Turret.getInstance()));
-					} else if (armControlJoystick.getRisingEdgeButton(9)) {
-						//Rehome Arm
-					} else if (armControlJoystick.getRisingEdgeButton(11)) {
-						//Rehome turret
-						Turret.getInstance().zeroSensors();
-						Turret.getInstance().setTurretControlMode(Turret.TurretControlMode.POSITION);
-					} else if (armControlJoystick.getRisingEdgeButton(12)) {
+				} else if (armControlJoystick.getRisingEdgeButton(8)) {
+					//Turret Open Loop
+					TeleopActionRunner.runAction(AutomatedAction.fromAction(new SetTurretOpenLoopAction((t) -> armControlJoystick.getRawButton(8),
+							(t) -> -armControlJoystick.getNormalizedAxis(2, 0.1) / 3.0), 300, Turret.getInstance()));
+				} else if (armControlJoystick.getRisingEdgeButton(9)) {
+					//Rehome Arm
+				} else if (armControlJoystick.getRisingEdgeButton(11)) {
+					//Rehome turret
+					Turret.getInstance().zeroSensors();
+					Turret.getInstance().setTurretControlMode(Turret.TurretControlMode.POSITION);
+				} else if (armControlJoystick.getRisingEdgeButton(12)) {
 
-					}
+				}
 
-					switch (armControlJoystick.getPOV()) {
-						case 0:
-							break;
-						case 90:
-							break;
-						case 180:
-							break;
-						case 270:
-							break;
-						default:
-							break;
-					}
+				switch (armControlJoystick.getPOV()) {
+					case 0:
+						break;
+					case 90:
+						break;
+					case 180:
+						break;
+					case 270:
+						break;
+					default:
+						break;
 				}
 			} catch (Exception ex) {
 				ConsoleReporter.report(ex);

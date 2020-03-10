@@ -11,22 +11,24 @@ public class DeviceIDConstants {
 	// are attached to the master)
 
 	// Drive
-	public static final int kRightDriveMasterId = 1;
-	public static final int kRightDriveSlaveAId = 2;
-	public static final int kRightDriveSlaveBId = 3;
-	public static final int kLeftDriveMasterId = 4;
-	public static final int kLeftDriveSlaveAId = 5;
-	public static final int kLeftDriveSlaveBId = 6;
+	public static final int kRightDriveMasterId = 4;
+	public static final int kRightDriveSlaveAId = 5;
+	public static final int kRightDriveSlaveBId = 6;
+	public static final int kLeftDriveMasterId = 1;
+	public static final int kLeftDriveSlaveAId = 2;
+	public static final int kLeftDriveSlaveBId = 3;
 
 
 	// Control Panel Manipulator
-	public static final int kCPMRotationId = 7;
+	public static final int kCPMRotationId = 13;
 
 
 
 	//Turret
-	public static final int kTurretMotorId = 14;
-	public static final int kBallShooterMotorId = 15;
+	public static final int kTurretMotorId = 8;
+	public static final int kHoodMotorId = 9;
+	public static final int kLeftShooterMotorId = 10;
+	public static final int kRightShooterMotorId = 11;
 
 
 	// Solenoids
