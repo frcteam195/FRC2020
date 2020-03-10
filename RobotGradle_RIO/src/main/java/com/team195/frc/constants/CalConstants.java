@@ -71,7 +71,7 @@ public class CalConstants {
 	///////////////////////////////////////////////////////////////////////////
 	//Turret
 	//50:1
-	public static final double kTurretPositionKp = 0.5;
+	public static final double kTurretPositionKp = 0.2;
 	public static final double kTurretPositionKi = 0.0;
 	public static final double kTurretPositionKd = 2.0;
 	public static final double kTurretPositionKf = 1023.0 / 20000.0;
@@ -83,10 +83,15 @@ public class CalConstants {
 	public static final int kTurretPeakCurrentThreshold = 9;
 	public static final int kTurretPeakCurrentThresholdExceedDuration = 0;
 
-	public static final double kShooterWheelKp = 0.5;
+	public static final double kTurretHoodKp = 0.4;
+	public static final double kTurretHoodKi = 0.0;
+	public static final double kTurretHoodKd = 1.7;
+	public static final double kTurretHoodKf = 0.047;
+
+	public static final double kShooterWheelKp = 0.2;
 	public static final double kShooterWheelKi = 0.0;
-	public static final double kShooterWheelKd = 1.0;
-	public static final double kShooterWheelKf = 1023.0 / 5730.0;
+	public static final double kShooterWheelKd = 22.0;
+	public static final double kShooterWheelKf = 0.046300;
 
 	//Units in rotations
 	public static final double kTurretMinDegrees = 270;

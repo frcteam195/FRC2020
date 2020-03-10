@@ -104,7 +104,7 @@ public class Robot extends TimedRobot {
 //			System.out.println("Drive Left Output: " + mDrive.getLeftDemand());
 //			System.out.println("Drive Right Output: " + mDrive.getRightDemand());
 //			System.out.println("Turret pos: " + Turret.getInstance().getPosition());
-			System.out.println("Shooter Velocity: " + Turret.getInstance().getShooterVelocity());
+//			System.out.println("Shooter Velocity: " + Turret.getInstance().getShooterVelocity());
 		}
 	}
 
@@ -235,7 +235,6 @@ public class Robot extends TimedRobot {
 				}
 			}
 			mDisabledLooper.start();
-			mHIDController.start();
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t);
 			throw t;

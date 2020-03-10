@@ -1,6 +1,7 @@
 package com.team195.frc.subsystems;
 
 import com.ctre.phoenix.ErrorCode;
+import com.ctre.phoenix.motorcontrol.StatorCurrentLimitConfiguration;
 import com.team195.frc.constants.CalConstants;
 import com.team195.frc.RobotState;
 import com.team195.frc.constants.DeviceIDConstants;
@@ -30,11 +31,9 @@ public class Turret extends Subsystem implements InterferenceSystem {
 	private final CKTalonFX mRightShooterMotorSlave;
 	private final CKTalonFX mTurretHoodMotor;
 
-	private TurretControlMode mTurretControlMode = TurretControlMode.OPEN_LOOP;
-	private HoodControlMode mHoodControlMode = HoodControlMode.OPEN_LOOP;
+	private TurretControlMode mTurretControlMode = TurretControlMode.POSITION;
+	private HoodControlMode mHoodControlMode = HoodControlMode.POSITION;
 	private ShooterControlMode mShooterControlMode = ShooterControlMode.OPEN_LOOP;
-
-	private final MotionInterferenceChecker turretAnyPositionCheck;
 
 	private PeriodicIO mPeriodicIO;
 	private ReflectingLogDataGenerator<PeriodicIO> mLogDataGenerator = new ReflectingLogDataGenerator<>(PeriodicIO.class);
@@ -53,7 +52,6 @@ public class Turret extends Subsystem implements InterferenceSystem {
 		//mTurretRotationMotor.setSensorPhase(true);
 		mTurretRotationMotor.setPIDF(CalConstants.kTurretPositionKp, CalConstants.kTurretPositionKi, CalConstants.kTurretPositionKd, CalConstants.kTurretPositionKf);
 		mTurretRotationMotor.setMotionParameters(CalConstants.kTurretPositionCruiseVel, CalConstants.kTurretPositionMMAccel, CalConstants.kTurretPositionSCurveStrength);
-		zeroSensors();
 //		mTurretRotationMotor.configForwardSoftLimitThreshold(CalConstants.kTurretForwardSoftLimit);
 //		mTurretRotationMotor.configForwardSoftLimitEnable(true);
 //		mTurretRotationMotor.configReverseSoftLimitThreshold(CalConstants.kTurretReverseSoftLimit);
@@ -67,6 +65,9 @@ public class Turret extends Subsystem implements InterferenceSystem {
 		//Radius = 8.875
 		mTurretHoodMotor = new CKTalonFX(DeviceIDConstants.kHoodMotorId, false, PDPBreaker.B30A);
 		mTurretHoodMotor.setInverted(true);
+		mTurretHoodMotor.configStatorCurrentLimit(new StatorCurrentLimitConfiguration(true, 10, 0, 0));
+		mTurretHoodMotor.setPIDF(CalConstants.kTurretHoodKp, CalConstants.kTurretHoodKi, CalConstants.kTurretHoodKd, CalConstants.kTurretHoodKf);
+		mTurretHoodMotor.setControlMode(MCControlMode.MotionMagic);
 
 		mLeftShooterMotorMaster = new CKTalonFX(DeviceIDConstants.kLeftShooterMotorId, false, PDPBreaker.B30A);
 		mRightShooterMotorSlave = new CKTalonFX(DeviceIDConstants.kRightShooterMotorId, mLeftShooterMotorMaster, PDPBreaker.B30A);
@@ -74,6 +75,7 @@ public class Turret extends Subsystem implements InterferenceSystem {
 		mLeftShooterMotorMaster.configMasterAndSlaves((t) -> {
 			t.setBrakeCoastMode(MCNeutralMode.Coast);
 			t.disableCurrentLimit();
+			t.configPeakOutputReverse(-0.4);
 			return ErrorCode.OK;
 		});
 		mLeftShooterMotorMaster.setPIDF(CalConstants.kShooterWheelKp, CalConstants.kShooterWheelKi, CalConstants.kShooterWheelKd, CalConstants.kShooterWheelKf);
@@ -86,11 +88,9 @@ public class Turret extends Subsystem implements InterferenceSystem {
 
 		}
 
-		turretAnyPositionCheck = new MotionInterferenceChecker(MotionInterferenceChecker.LogicOperation.AND, true,
-				(t) -> (true)
-		);
-
 		mTurretMasterHasReset = new CachedValue<>(500, (t) -> mTurretRotationMotor.hasMotorControllerReset() != DiagnosticMessage.NO_MSG);
+
+		zeroSensors();
 	}
 
 	public static Turret getInstance() {
@@ -124,9 +124,13 @@ public class Turret extends Subsystem implements InterferenceSystem {
 	@Override
 	public void zeroSensors() {
 		mTurretRotationMotor.setEncoderPosition(0);
+		mTurretHoodMotor.setEncoderPosition(0);
 		setTurretPosition(0);
+		setHoodPosition(0);
 		if (mTurretControlMode == TurretControlMode.POSITION)
 			mTurretRotationMotor.set(MCControlMode.MotionMagic, 0, 0, 0);
+		if (mHoodControlMode == HoodControlMode.POSITION)
+			mTurretHoodMotor.set(MCControlMode.MotionMagic, 0, 0, 0);
 	}
 
 	@Override
@@ -179,12 +183,7 @@ public class Turret extends Subsystem implements InterferenceSystem {
 							mPeriodicIO.turret_setpoint = TurretHelper.convertTurretDegreesToRotations(mVisionTracker.getTargetHorizAngleDev());
 						//Fall through on purpose to set position -> no break;
 					case POSITION:
-						if (turretAnyPositionCheck.hasPassedConditions() //|| Elevator.getInstance().getPosition() > ElevatorPositions.CargoBall
-							|| Math.abs(mPeriodicIO.turret_setpoint - TurretPositions.Back180) < TurretHelper.convertTurretDegreesToRotations(10)
-							|| Math.abs(mPeriodicIO.turret_setpoint - TurretPositions.Home) < TurretHelper.convertTurretDegreesToRotations(10))
-							mTurretRotationMotor.set(MCControlMode.MotionMagic, mPeriodicIO.turret_setpoint, 0, 0);
-//						else if (mPeriodicIO.turret_setpoint != TurretPositions.Back180 && mPeriodicIO.turret_setpoint != TurretPositions.Home)
-//							mTurretRotationMotor.set(MCControlMode.MotionMagic, 0, 0, 0);
+						mTurretRotationMotor.set(MCControlMode.MotionMagic, mPeriodicIO.turret_setpoint, 0, 0);
 						break;
 					case GIMBAL:
 						Pose2d robotPose = RobotState.getInstance().getLatestFieldToVehicle().getValue();
@@ -208,6 +207,7 @@ public class Turret extends Subsystem implements InterferenceSystem {
 				case OPEN_LOOP:
 					break;
 				case POSITION:
+					mTurretHoodMotor.set(MCControlMode.MotionMagic, mPeriodicIO.hood_position, 0, 0);
 					break;
 				case DISABLED:
 					break;
@@ -237,6 +237,10 @@ public class Turret extends Subsystem implements InterferenceSystem {
 
 	public synchronized void setTurretPosition(double turretPosition) {
 		mPeriodicIO.turret_setpoint = turretPosition;
+	}
+
+	public synchronized void setHoodPosition(double hoodPosition) {
+		mPeriodicIO.hood_setpoint = hoodPosition;
 	}
 
 	public synchronized void setTurretControlMode(TurretControlMode turretControlMode) {
@@ -310,6 +314,7 @@ public class Turret extends Subsystem implements InterferenceSystem {
 		mPeriodicIO.turret_reset = mTurretMasterHasReset.getValue();
 		mPeriodicIO.turret_loop_time = loopTimer.hasElapsed();
 		mPeriodicIO.shooter_velocity = mLeftShooterMotorMaster.getVelocity();
+		mPeriodicIO.hood_position = mTurretHoodMotor.getPosition();
 	}
 
 	@Override
@@ -329,6 +334,9 @@ public class Turret extends Subsystem implements InterferenceSystem {
 
 		public double shooter_velocity;
 		public double shooter_setpoint;
+
+		public double hood_position;
+		public double hood_setpoint;
 
 		// Outputs
 		public double turret_loop_time;

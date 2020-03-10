@@ -43,7 +43,7 @@ public class Constants {
     public static final String RIO_IP = "10.1.95.2";
 
 
-    public static final boolean TUNING_PIDS = false;
+    public static final boolean TUNING_PIDS = true;
     public static final boolean DEBUG = false;
     public static final boolean LOGGING_ENABLED = true;
     public static final boolean REPORTING_ENABLED = false;
