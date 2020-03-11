@@ -32,7 +32,7 @@ public class Turret extends Subsystem implements InterferenceSystem {
 
 	private TurretControlMode mTurretControlMode = TurretControlMode.POSITION;
 	private HoodControlMode mHoodControlMode = HoodControlMode.POSITION;
-	private ShooterControlMode mShooterControlMode = ShooterControlMode.OPEN_LOOP;
+	private ShooterControlMode mShooterControlMode = ShooterControlMode.VELOCITY;
 
 	private PeriodicIO mPeriodicIO;
 	private ReflectingLogDataGenerator<PeriodicIO> mLogDataGenerator = new ReflectingLogDataGenerator<>(PeriodicIO.class);
@@ -234,7 +234,7 @@ public class Turret extends Subsystem implements InterferenceSystem {
 		double diffErr = mPeriodicIO.shooter_setpoint_rpm - mPeriodicIO.shooter_velocity_rpm;
 		if (CalConstants.kShooterWheelMaxAccel == 0)
 			return mPeriodicIO.shooter_setpoint_rpm;
-		double outputVel = mPeriodicIO.shooter_velocity_rpm + Math.min(Math.abs(diffErr), (CalConstants.kShooterWheelMaxAccel * shooter_dt.hasElapsed())) * Math.copySign(1.0, diffErr);
+		double outputVel = mPeriodicIO.shooter_setpoint_rpm + Math.min(Math.abs(diffErr), (CalConstants.kShooterWheelMaxAccel * shooter_dt.hasElapsed())) * Math.copySign(1.0, diffErr);
 		shooter_dt.start();
 		return outputVel;
 	}
@@ -245,6 +245,10 @@ public class Turret extends Subsystem implements InterferenceSystem {
 
 	public synchronized void setHoodPosition(double hoodPosition) {
 		mPeriodicIO.hood_setpoint_deg = hoodPosition;
+	}
+
+	public synchronized void setShooterVelocity(double shooterVelocity) {
+		mPeriodicIO.shooter_setpoint_rpm = shooterVelocity;
 	}
 
 	public synchronized void setTurretControlMode(TurretControlMode turretControlMode) {

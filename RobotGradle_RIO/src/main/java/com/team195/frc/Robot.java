@@ -105,6 +105,7 @@ public class Robot extends TimedRobot {
 //			System.out.println("Drive Left Output: " + mDrive.getLeftDemand());
 //			System.out.println("Drive Right Output: " + mDrive.getRightDemand());
 //			System.out.println("Turret pos: " + Turret.getInstance().getPosition());
+//			System.out.println("Turret hood req: " + Turret);
 //			System.out.println("Shooter Velocity: " + Turret.getInstance().getShooterVelocity());
 		}
 	}

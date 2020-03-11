@@ -114,11 +114,30 @@ public class DriveControls {
 			return false;
 		});
 
-		//Intake On Button
-		registerButtonPressControl(buttonBox1, 8, (j, b) -> {
-			TeleopActionRunner.runAction(AutomatedAction.fromAction(
-					new SetIntakeAction(false, () -> j.getRawButton(b)), 300, Intake.getInstance()));
+		//Shooter On
+		registerButtonPressControl(buttonBox1, 1, (j, b) -> {
+//			Turret.getInstance().setHoodPosition(80);
+			Turret.getInstance().setShooterVelocity(5400);
+			Turret.getInstance().setShooterControlMode(Turret.ShooterControlMode.VELOCITY);
 		});
+
+		registerButtonPressControl(buttonBox1, 2, (j, b) -> {
+//			Turret.getInstance().setHoodPosition(80);
+			Turret.getInstance().setShooterControlMode(Turret.ShooterControlMode.DISABLED);
+		});
+
+		//Intake On Button
+		registerButtonPressControl(buttonBox1, 3, (j, b) -> {
+			TeleopActionRunner.runAction(AutomatedAction.fromAction(
+					new SetIntakeAction(false, () -> j.getRawButton(b)), 300));
+		});
+
+		//Feeder On Button
+		registerButtonPressControl(buttonBox1, 4, (j, b) -> {
+			TeleopActionRunner.runAction(AutomatedAction.fromAction(
+					new SetFeederAction(false, () -> j.getRawButton(b)), 300));
+		});
+
 
 		//Blink LEDs Button
 		registerButtonPressControl(buttonBox2, 14, (j, b) -> LEDController.getInstance().setRequestedState(LEDController.LEDState.BLINK));

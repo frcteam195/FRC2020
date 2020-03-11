@@ -83,8 +83,8 @@ public class CalConstants {
 	public static final double kTurretHoodKi = 0.0;
 	public static final double kTurretHoodKd = 1.7;
 	public static final double kTurretHoodKf = 0.047;
-	public static final int kTurretHoodCruiseVel = 120;
-	public static final int kTurretHoodMMAccel = 150;
+	public static final int kTurretHoodCruiseVel = 120 * 360;
+	public static final int kTurretHoodMMAccel = 150 * 360;
 	public static final int kTurretHoodSCurveStrength = 5;
 	public static final double kTurretHoodContinuousStatorCurrentLimit = 10;
 
@@ -92,7 +92,7 @@ public class CalConstants {
 	public static final double kShooterWheelKi = 0.0;
 	public static final double kShooterWheelKd = 22.0;
 	public static final double kShooterWheelKf = 0.046300;
-	public static final double kShooterWheelMaxAccel = 1200; //RPM/s
+	public static final double kShooterWheelMaxAccel = 800; //RPM/s
 
 	//Units in rotations
 	public static final double kTurretMinDegrees = 400;

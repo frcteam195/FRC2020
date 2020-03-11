@@ -17,6 +17,8 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Timer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class VisionTracker extends Subsystem {
@@ -26,6 +28,8 @@ public class VisionTracker extends Subsystem {
 
 	private TargetMode mTargetMode = TargetMode.AUTO_TARGET;
 	private boolean mVisionEnabled = false;
+
+	private double[] mZeroArray = new double[]{0, 0, 0, 0};
 
 	private NetworkTable mCurrentTargetingLimelightNT;
 
@@ -177,6 +181,8 @@ public class VisionTracker extends Subsystem {
 				mPeriodicIO.target_area = mCurrentTargetingLimelightNT.getEntry("ta").getDouble(0);
 				mPeriodicIO.target_skew = mCurrentTargetingLimelightNT.getEntry("ts").getDouble(0);
 				mPeriodicIO.target_latency = mCurrentTargetingLimelightNT.getEntry("tl").getDouble(0);
+				mPeriodicIO.x_corners = limelightTurret.getEntry("tcornx").getDoubleArray(mZeroArray);
+				mPeriodicIO.y_corners = limelightTurret.getEntry("tcorny").getDoubleArray(mZeroArray);
 
 				if (mPeriodicIO.target_valid > 0) {
 					Translation2d cameraToTargetTranslation = getCameraToTargetTranslation();
@@ -218,6 +224,35 @@ public class VisionTracker extends Subsystem {
 		mPeriodicIO.vision_loop_time += loopTimer.hasElapsed();
 	}
 
+//	private Translation2d[] getTopCorners() {
+//		// something went wrong
+//		if (mPeriodicIO.target_valid != 1 || Arrays.equals(mPeriodicIO.x_corners, mZeroArray) || Arrays.equals(mPeriodicIO.y_corners, mZeroArray)
+//				|| mPeriodicIO.x_corners.length != 4 || mPeriodicIO.y_corners.length != 4) {
+//			return null;
+//		}
+//
+//		return
+//	}
+//
+//	private Translation2d getCameraToVisionTargetPose(TargetInfo target, boolean high, Limelight source) {
+//		// Compensate for camera pitch
+//		Translation2d xz_plane_translation = new Translation2d(target.getX(), target.getZ()).rotateBy(source.getHorizontalPlaneToLens());
+//		double x = xz_plane_translation.x();
+//		double y = target.getY();
+//		double z = xz_plane_translation.y();
+//
+//		// find intersection with the goal
+//		double differential_height = source.getLensHeight() - (high ? Constants.kPortTargetHeight : Constants.kHatchTargetHeight);
+//		if ((z < 0.0) == (differential_height > 0.0)) {
+//			double scaling = differential_height / -z;
+//			double distance = Math.hypot(x, y) * scaling;
+//			Rotation2d angle = new Rotation2d(x, y, true);
+//			return new Translation2d(distance * angle.cos(), distance * angle.sin());
+//		}
+//
+//		return null;
+//	}
+
 	@SuppressWarnings("WeakerAccess")
 	public static class PeriodicIO {
 		//Making members public here will automatically add them to logs
@@ -229,6 +264,8 @@ public class VisionTracker extends Subsystem {
 		double target_skew;
 		double target_latency;
 		double target_distance;
+		double[] x_corners;
+		double[] y_corners;
 		public Pose2d camera_to_target_pose;
 
 		//Written values

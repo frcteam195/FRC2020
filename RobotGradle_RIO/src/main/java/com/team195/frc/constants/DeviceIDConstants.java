@@ -18,7 +18,6 @@ public class DeviceIDConstants {
 	public static final int kLeftDriveSlaveAId = 2;
 	public static final int kLeftDriveSlaveBId = 3;
 
-
 	// Control Panel Manipulator
 	public static final int kCPMRotationId = 13;
 
