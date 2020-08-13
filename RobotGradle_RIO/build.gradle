@@ -176,6 +176,9 @@ protobuf {
 					commandLine 'git', 'clone', 'https://github.com/frcteam195/CKProtoSpec', 'src/main/proto'
 				}
 			}
+			generateProtoTask.doLast {
+				new File("${rootDir}/src/main/proto/", "dummy.proto").text = "syntax = \"proto3\";"
+			}
 		}
 	}
 }
