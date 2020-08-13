@@ -15,6 +15,7 @@ plugins {
     id "idea"
     id "war"
     id "org.hidetake.ssh" version "2.10.1"
+    id "com.google.protobuf" version "0.8.12"
 }
 
 apply plugin: 'com.bmuschko.tomcat'
@@ -117,6 +118,7 @@ dependencies {
 
     compile 'gov.nist.math:jama:1.0.3'
 	compile 'com.team195:CKIllposedOSCLib:0.0.1'
+	compile 'com.google.protobuf:protobuf-java:3.12.4'
 //	def jUnitVersion = '5.6.0-M1'
 //    testCompile("org.junit.jupiter:junit-jupiter-api:${jUnitVersion}")
 //    testRuntime("org.junit.jupiter:junit-jupiter-engine:${jUnitVersion}")
@@ -138,6 +140,44 @@ dependencies {
 	compile("org.springframework:spring-webmvc:5.2.3.RELEASE")
     compile("javax.servlet:javax.servlet-api:4.0.1")
     compile("javax.servlet:jstl:1.2") 
+}
+
+clean.doFirst {
+	delete "${rootDir}/src/main/proto/"
+	delete "${rootDir}/src/generated/"
+}
+
+clean.doLast {
+	mkdir "${rootDir}/src/main/proto"
+	new File("${rootDir}/src/main/proto/", "dummy.proto").text = "syntax = \"proto3\";"
+}
+
+protobuf {
+  generatedFilesBaseDir = "$projectDir/src/generated"
+  
+  protoc {
+    // Download from repositories
+    artifact = 'com.google.protobuf:protoc:3.12.4'
+  }
+  
+	generateProtoTasks {
+		all().each {
+			generateProtoTask ->
+			// The generateProto task does not seem to properly clean its previously generated outputs.
+			// See https://github.com/google/protobuf-gradle-plugin/issues/332
+			// See https://github.com/google/protobuf-gradle-plugin/issues/331
+			generateProtoTask.doFirst {
+				project.logger.lifecycle("Downloading protos from spec repo")
+				exec {
+					commandLine 'rm', '-Rf', 'src/main/proto'
+				}
+				exec {
+					//commandLine 'pwd'
+					commandLine 'git', 'clone', 'https://github.com/frcteam195/CKProtoSpec', 'src/main/proto'
+				}
+			}
+		}
+	}
 }
 
 // context where tomcat is deployed, by default localhost:8080/

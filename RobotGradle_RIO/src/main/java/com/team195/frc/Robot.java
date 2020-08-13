@@ -58,12 +58,12 @@ public class Robot extends TimedRobot {
 
 			mSubsystemManager = SubsystemManager.getInstance(
 					RobotStateEstimator.getInstance(),
-					VisionTracker.getInstance(),
-					Drive.getInstance(),
-					Turret.getInstance(),
-					Intake.getInstance(),
+					//VisionTracker.getInstance(),
+					Drive.getInstance()//,
+					//Turret.getInstance(),
+					//Intake.getInstance(),
 //					ControlPanelManipulator.getInstance(),
-					Infrastructure.getInstance()
+					//Infrastructure.getInstance()
 			);
 
 			ConsoleReporter.getInstance();
@@ -104,49 +104,45 @@ public class Robot extends TimedRobot {
 
 //			System.out.println("Drive Left Output: " + mDrive.getLeftDemand());
 //			System.out.println("Drive Right Output: " + mDrive.getRightDemand());
-//			System.out.println("Turret pos: " + Turret.getInstance().getPosition());
-//			System.out.println("Turret hood req: " + Turret);
-//			System.out.println("Shooter Velocity: " + Turret.getInstance().getShooterVelocity());
 		}
 	}
 
 	@Override
 	public void autonomousInit() {
-		teleopInit();
-//		try {
-//			CrashTracker.logAutoInit();
-//
-//			mDisabledLooper.stop();
-//			mInfrastructure.setIsDuringAuto(true);
-//			Drive.getInstance().zeroSensors();
-//			RobotState.getInstance().reset(Timer.getFPGATimestamp(), Pose2d.identity());
-//			mDrive.setBrakeMode(true);
-//			mDrive.forceBrakeModeUpdate();
-//			mDrive.setVelocity(DriveSignal.NEUTRAL, DriveSignal.NEUTRAL);
-//			mEnabledLooper.start();
-//			mHIDController.start();
-//
-//			if (mAutoModeExecutor.isSet()) {
-//				ConsoleReporter.report("Start Auto Mode");
-//				mAutoModeExecutor.start();
-//			}
-//		} catch (Exception ex) {
-//			CrashTracker.logThrowableCrash(ex);
-//		}
-//		catch (Throwable t) {
-//			CrashTracker.logThrowableCrash(t);
-//			throw t;
-//		}
+		try {
+			CrashTracker.logAutoInit();
+
+			mDisabledLooper.stop();
+			mInfrastructure.setIsDuringAuto(true);
+			Drive.getInstance().zeroSensors();
+			RobotState.getInstance().reset(Timer.getFPGATimestamp(), Pose2d.identity());
+			mDrive.setBrakeMode(true);
+			mDrive.forceBrakeModeUpdate();
+			mDrive.setVelocity(DriveSignal.NEUTRAL, DriveSignal.NEUTRAL);
+			mEnabledLooper.start();
+			mDriveControls.start();
+
+			if (mAutoModeExecutor.isSet()) {
+				ConsoleReporter.report("Start Auto Mode");
+				mAutoModeExecutor.start();
+			}
+		} catch (Exception ex) {
+			CrashTracker.logThrowableCrash(ex);
+		}
+		catch (Throwable t) {
+			CrashTracker.logThrowableCrash(t);
+			throw t;
+		}
 	}
 
 	@Override
 	public void autonomousPeriodic() {
-//		try {
-//
-//		} catch (Throwable t) {
-//			CrashTracker.logThrowableCrash(t);
-//			throw t;
-//		}
+		try {
+
+		} catch (Throwable t) {
+			CrashTracker.logThrowableCrash(t);
+			throw t;
+		}
 	}
 
 	@Override
@@ -179,13 +175,12 @@ public class Robot extends TimedRobot {
 
 	@Override
 	public void teleopPeriodic() {
-//		System.out.println("Turret vel: " + Turret.getInstance().getSensorVelocity());
-//		try {
-//
-//		} catch (Throwable t) {
-//			CrashTracker.logThrowableCrash(t);
-//			throw t;
-//		}
+		try {
+
+		} catch (Throwable t) {
+			CrashTracker.logThrowableCrash(t);
+			throw t;
+		}
 	}
 
 	@Override
@@ -209,7 +204,7 @@ public class Robot extends TimedRobot {
 			}
 
 			//Crash the JVM and force a reset
-//			System.exit(1);
+			System.exit(1);
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t);
 			throw t;

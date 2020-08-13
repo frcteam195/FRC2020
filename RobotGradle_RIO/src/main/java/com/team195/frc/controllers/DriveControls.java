@@ -113,7 +113,7 @@ public class DriveControls {
 			}
 			return false;
 		});
-
+/*
 		//Shooter On
 		registerButtonPressControl(buttonBox1, 1, (j, b) -> {
 //			Turret.getInstance().setHoodPosition(80);
@@ -159,5 +159,6 @@ public class DriveControls {
 			Turret.getInstance().zeroSensors();
 			Turret.getInstance().setTurretControlMode(Turret.TurretControlMode.POSITION);
 		});
+ */
 	}
 }
