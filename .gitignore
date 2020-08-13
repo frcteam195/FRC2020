@@ -9,6 +9,9 @@ out/
 .idea/
 generated/
 
+RobotGradle_RIO/src/main/proto/
+
+
 *.iws
 *.ipr
 *.iml
