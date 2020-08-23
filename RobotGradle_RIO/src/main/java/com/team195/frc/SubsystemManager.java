@@ -8,6 +8,7 @@ import com.team195.frc.loops.Looper;
 import com.team195.frc.reporters.ConsoleReporter;
 import com.team195.frc.reporters.DataReporter;
 import com.team195.frc.reporters.MessageLevel;
+import com.team195.frc.reporters.TelemetryReporter;
 import com.team195.frc.subsystems.Subsystem;
 import com.team195.lib.util.ElapsedTimer;
 import com.team195.lib.util.Reportable;
@@ -109,7 +110,10 @@ public class SubsystemManager implements ILooper {
 		@Override
 		public void onLoop(double timestamp) {
 			eLoopTimer.start();
+
 			mAllSubsystems.forEach(Subsystem::readPeriodicInputs);
+			TelemetryReporter.sendTelemetry();
+			ConsoleReporter.report(TelemetryReporter.getCurrRobotPosition());
 			mLoops.forEach((l) -> l.onLoop(timestamp));
 			mAllSubsystems.forEach(Subsystem::writePeriodicOutputs);
 
@@ -167,7 +171,10 @@ public class SubsystemManager implements ILooper {
 		@Override
 		public void onLoop(double timestamp) {
 			eLoopTimer.start();
+
 			mAllSubsystems.forEach(Subsystem::readPeriodicInputs);
+			TelemetryReporter.sendTelemetry();
+			ConsoleReporter.report(TelemetryReporter.getCurrRobotPosition());
 			mAllSubsystems.forEach(Subsystem::writePeriodicOutputs);
 
 			if (mCriticalCheckTimeout.isTimedOut()) {

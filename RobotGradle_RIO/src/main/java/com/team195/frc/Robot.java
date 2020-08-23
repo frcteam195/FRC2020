@@ -57,14 +57,18 @@ public class Robot extends TimedRobot {
 			mDriveControls = DriveControls.getInstance();
 
 			mSubsystemManager = SubsystemManager.getInstance(
-					RobotStateEstimator.getInstance(),
-					//VisionTracker.getInstance(),
-					Drive.getInstance()//,
-					//Turret.getInstance(),
-					//Intake.getInstance(),
-//					ControlPanelManipulator.getInstance(),
-					//Infrastructure.getInstance()
+					Drive.getInstance()
 			);
+
+//			mSubsystemManager = SubsystemManager.getInstance(
+//					//RobotStateEstimator.getInstance(),
+//					//VisionTracker.getInstance(),
+//					Drive.getInstance()//,
+//					//Turret.getInstance(),
+//					//Intake.getInstance(),
+////					ControlPanelManipulator.getInstance(),
+//					//Infrastructure.getInstance()
+//			);
 
 			ConsoleReporter.getInstance();
 			ConsoleReporter.setReportingLevel(MessageLevel.INFO);
