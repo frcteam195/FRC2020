@@ -58,7 +58,9 @@ public class QuinticHermiteOptimizerTest {
         splines2.add(new QuinticHermiteSpline(k, l));
 
         startTime = System.currentTimeMillis();
-        assertTrue(QuinticHermiteSpline.optimizeSpline(splines2) < 0.05);
+        double interVal = QuinticHermiteSpline.optimizeSpline(splines2);
+        System.out.println("DCurv2 val: " + interVal);
+        assertTrue(interVal < 0.05);
         assertEquals(splines2.get(0).getCurvature(1.0), 0.0, kEpsilon);
         assertEquals(splines2.get(2).getCurvature(1.0), 0.0, kEpsilon);
         System.out.println("Optimization time (ms): " + (System.currentTimeMillis() - startTime));

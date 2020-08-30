@@ -185,6 +185,11 @@ public class QuinticHermiteSpline extends Spline {
      */
     private static class ControlPoint {
         private double ddx, ddy;
+
+        @Override
+        public String toString() {
+            return "cp ddx: " + ddx + ", ddy: " + ddy;
+        }
     }
 
     /**
@@ -248,6 +253,10 @@ public class QuinticHermiteSpline extends Spline {
             splines.set(i, temp);
             splines.set(i + 1, temp1);
             magnitude += controlPoints[i].ddx * controlPoints[i].ddx + controlPoints[i].ddy * controlPoints[i].ddy;
+
+            System.out.println(splines.get(i));
+            System.out.println(splines.get(i+1));
+            System.out.println(controlPoints[i]);
         }
 
         magnitude = Math.sqrt(magnitude);
@@ -327,5 +336,10 @@ public class QuinticHermiteSpline extends Spline {
         double B = (p3.x() * p3.x() * (p1.y() - p2.y()) + p2.x() * p2.x() * (p3.y() - p1.y()) + p1.x() * p1.x() *
                 (p2.y() - p3.y()));
         return -B / (2 * A);
+    }
+
+    @Override
+    public String toString() {
+        return "ddx0: " + ddx0 + ", ddx1: " + ddx1 + ", ddy0: " + ddy0 + ", ddy1: " + ddy1;
     }
 }
