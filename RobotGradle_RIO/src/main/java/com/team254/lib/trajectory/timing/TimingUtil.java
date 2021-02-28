@@ -128,6 +128,9 @@ public class TimingUtil {
             }
             // ConsoleReporter.report("i: " + i + ", " + constraint_state.toString());
             predecessor = constraint_state;
+            System.out.println("MaxVel" + constraint_state.max_velocity);
+            System.out.println("MaxAccel" + constraint_state.max_acceleration);
+            System.out.println("MinAccel" + constraint_state.min_acceleration);
         }
 
         // Backward pass.
@@ -203,6 +206,10 @@ public class TimingUtil {
             final double accel = (constrained_state.max_velocity * constrained_state.max_velocity - v * v) / (2.0 * ds);
             double dt = 0.0;
             if (i > 0) {
+//                System.out.println("MaxVel: " + constrained_state.max_velocity);
+//                System.out.println("Vel: " + v);
+//                System.out.println("Accel: " + accel);
+
                 timed_states.get(i - 1).set_acceleration(reverse ? -accel : accel);
                 if (Math.abs(accel) > kEpsilon) {
                     dt = (constrained_state.max_velocity - v) / accel;

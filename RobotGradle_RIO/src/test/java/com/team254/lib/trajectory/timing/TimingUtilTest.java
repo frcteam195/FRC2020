@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-public class TimingUtilTest {
+public class  TimingUtilTest {
 
     public static final double kTestEpsilon = Util.kEpsilon;
 
@@ -68,6 +68,7 @@ public class TimingUtilTest {
 
     @Test
     public void testNoConstraints() {
+        System.out.println("Timing Util Test:=================================");
         Trajectory<Translation2d> traj = new Trajectory<>(kWaypoints);
         DistanceView<Translation2d> dist_view = new DistanceView<>(traj);
 
@@ -86,71 +87,71 @@ public class TimingUtilTest {
                 10.0, 5.0);
 //        System.out.println(timed_traj.toCSV());
     }
-
-    @Test
-    public void testConditionalVelocityConstraint() {
-        Trajectory<Translation2d> traj = new Trajectory<>(kWaypoints);
-        DistanceView<Translation2d> dist_view = new DistanceView<>(traj);
-
-        class ConditionalTimingConstraint<S extends ITranslation2d<S>> implements TimingConstraint<S> {
-            @Override
-            public double getMaxVelocity(S state) {
-                if (state.getTranslation().x() >= 24.0) {
-                    return 5.0;
-                } else {
-                    return Double.POSITIVE_INFINITY;
-                }
-            }
-
-            @Override
-            public TimingConstraint.MinMaxAcceleration getMinMaxAcceleration(S state,
-                                                                             double velocity) {
-                return new TimingConstraint.MinMaxAcceleration(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-            }
-        }
-
-        // Trapezoidal profile.
-        Trajectory<TimedState<Translation2d>> timed_traj = buildAndCheckTrajectory(dist_view, 1.0,
-                Arrays.asList(new ConditionalTimingConstraint<>()), 0.0, 0.0, 10.0, 5.0);
-//        System.out.println(timed_traj.toCSV());
-    }
-
-    @Test
-    public void testConditionalAccelerationConstraint() {
-        Trajectory<Translation2d> traj = new Trajectory<>(kWaypoints);
-        DistanceView<Translation2d> dist_view = new DistanceView<>(traj);
-
-        class ConditionalTimingConstraint<S extends ITranslation2d<S>> implements TimingConstraint<S> {
-            @Override
-            public double getMaxVelocity(S state) {
-                return Double.POSITIVE_INFINITY;
-            }
-
-            @Override
-            public TimingConstraint.MinMaxAcceleration getMinMaxAcceleration(S state,
-                                                                             double velocity) {
-                return new TimingConstraint.MinMaxAcceleration(-10.0, 10.0 / velocity);
-            }
-        }
-
-        // Trapezoidal profile.
-        Trajectory<TimedState<Translation2d>> timed_traj = buildAndCheckTrajectory(dist_view, 1.0,
-                Arrays.asList(new ConditionalTimingConstraint<>()), 0.0, 0.0, 10.0, 5.0);
-//        System.out.println(timed_traj.toCSV());
-    }
-
-    @Test
-    public void testVelocityLimitRegionConstraint() {
-        Trajectory<Translation2d> traj = new Trajectory<>(kWaypoints);
-        DistanceView<Translation2d> dist_view = new DistanceView<>(traj);
-
-        VelocityLimitRegionConstraint<Translation2d> constraint = new VelocityLimitRegionConstraint<>(
-                new Translation2d(6.0, -6.0), new Translation2d(18.0, 6.0), 3.0);
-
-        // Trapezoidal profile.
-        Trajectory<TimedState<Translation2d>> timed_traj = buildAndCheckTrajectory(dist_view, 1.0,
-                Arrays.asList(constraint), 0.0, 0.0, 10.0, 5.0);
-//        System.out.println(timed_traj.toCSV());
-    }
+//
+//    @Test
+//    public void testConditionalVelocityConstraint() {
+//        Trajectory<Translation2d> traj = new Trajectory<>(kWaypoints);
+//        DistanceView<Translation2d> dist_view = new DistanceView<>(traj);
+//
+//        class ConditionalTimingConstraint<S extends ITranslation2d<S>> implements TimingConstraint<S> {
+//            @Override
+//            public double getMaxVelocity(S state) {
+//                if (state.getTranslation().x() >= 24.0) {
+//                    return 5.0;
+//                } else {
+//                    return Double.POSITIVE_INFINITY;
+//                }
+//            }
+//
+//            @Override
+//            public TimingConstraint.MinMaxAcceleration getMinMaxAcceleration(S state,
+//                                                                             double velocity) {
+//                return new TimingConstraint.MinMaxAcceleration(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+//            }
+//        }
+//
+//        // Trapezoidal profile.
+//        Trajectory<TimedState<Translation2d>> timed_traj = buildAndCheckTrajectory(dist_view, 1.0,
+//                Arrays.asList(new ConditionalTimingConstraint<>()), 0.0, 0.0, 10.0, 5.0);
+////        System.out.println(timed_traj.toCSV());
+//    }
+//
+//    @Test
+//    public void testConditionalAccelerationConstraint() {
+//        Trajectory<Translation2d> traj = new Trajectory<>(kWaypoints);
+//        DistanceView<Translation2d> dist_view = new DistanceView<>(traj);
+//
+//        class ConditionalTimingConstraint<S extends ITranslation2d<S>> implements TimingConstraint<S> {
+//            @Override
+//            public double getMaxVelocity(S state) {
+//                return Double.POSITIVE_INFINITY;
+//            }
+//
+//            @Override
+//            public TimingConstraint.MinMaxAcceleration getMinMaxAcceleration(S state,
+//                                                                             double velocity) {
+//                return new TimingConstraint.MinMaxAcceleration(-10.0, 10.0 / velocity);
+//            }
+//        }
+//
+//        // Trapezoidal profile.
+//        Trajectory<TimedState<Translation2d>> timed_traj = buildAndCheckTrajectory(dist_view, 1.0,
+//                Arrays.asList(new ConditionalTimingConstraint<>()), 0.0, 0.0, 10.0, 5.0);
+////        System.out.println(timed_traj.toCSV());
+//    }
+//
+//    @Test
+//    public void testVelocityLimitRegionConstraint() {
+//        Trajectory<Translation2d> traj = new Trajectory<>(kWaypoints);
+//        DistanceView<Translation2d> dist_view = new DistanceView<>(traj);
+//
+//        VelocityLimitRegionConstraint<Translation2d> constraint = new VelocityLimitRegionConstraint<>(
+//                new Translation2d(6.0, -6.0), new Translation2d(18.0, 6.0), 3.0);
+//
+//        // Trapezoidal profile.
+//        Trajectory<TimedState<Translation2d>> timed_traj = buildAndCheckTrajectory(dist_view, 1.0,
+//                Arrays.asList(constraint), 0.0, 0.0, 10.0, 5.0);
+////        System.out.println(timed_traj.toCSV());
+//    }
 
 }

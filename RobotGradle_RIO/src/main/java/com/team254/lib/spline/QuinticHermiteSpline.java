@@ -254,9 +254,9 @@ public class QuinticHermiteSpline extends Spline {
             splines.set(i + 1, temp1);
             magnitude += controlPoints[i].ddx * controlPoints[i].ddx + controlPoints[i].ddy * controlPoints[i].ddy;
 
-            System.out.println(splines.get(i));
-            System.out.println(splines.get(i+1));
-            System.out.println(controlPoints[i]);
+//            System.out.println(splines.get(i));
+//            System.out.println(splines.get(i+1));
+//            System.out.println(controlPoints[i]);
         }
 
         magnitude = Math.sqrt(magnitude);
